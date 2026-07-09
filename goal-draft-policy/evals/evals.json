@@ -1,0 +1,26 @@
+{
+  "skill_name": "goal-draft-policy",
+  "evals": [
+    {
+      "id": 0,
+      "name": "author-goal-node-tests",
+      "prompt": "I'm working in this Node/TypeScript repo. I want to hand off to Claude and have it keep working on its own until the authentication tests pass, without me approving every turn. Set up a /goal for me.",
+      "expected_output": "A ready-to-paste /goal line whose proof command is discovered from the repo (jest / npm test — ideally the auth-scoped script), with a fresh/latest-turn evidence signal (0 failed), a guardrail against editing test files, and a stop clause. Should NOT be vague prose.",
+      "files": ["../goal-draft-policy-workspace/iteration-1/fixtures/node-app"]
+    },
+    {
+      "id": 1,
+      "name": "repair-vague-goal",
+      "prompt": "I tried `/goal make the code clean and fast` but it just keeps running and never finishes. Why won't it complete, and how should I rewrite it?",
+      "expected_output": "A diagnosis that the condition is subjective/unverifiable-from-transcript and unbounded, plus a repaired /goal that is measurable (e.g. lint = 0 problems, a benchmark threshold), names a proof command, anchors to the latest turn, and adds a stop clause.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "author-goal-python-migration",
+      "prompt": "This Python service still calls the deprecated db.query_raw() helper in a few places. I want Claude to migrate every call site to the new db.query() API on its own and not stop until it's fully done and the tests still pass. Give me a /goal.",
+      "expected_output": "A /goal with an exhaustive end state (no query_raw call sites remain), a proof via a grep/rg count (0 matches) AND the repo's real test command (pytest), latest-turn anchoring, a guardrail (don't change unrelated code / the db.query signature), and a stop clause.",
+      "files": ["../goal-draft-policy-workspace/iteration-1/fixtures/py-app"]
+    }
+  ]
+}

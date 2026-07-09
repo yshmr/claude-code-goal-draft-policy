@@ -1,0 +1,5 @@
+```
+/goal All three checks the CI workflow runs are green: lint, typecheck, and the full jest suite (tests/unit AND tests/integration). Prove it by, in the most recent turn, running `npm run lint` (eslint exits 0, 0 problems), `npm run typecheck` (tsc --noEmit exits 0, no errors), and `npx jest --ci` (summary shows 0 failed across both tests/unit and tests/integration) — paste each command's tail. Note: `npm test` alone is NOT sufficient; it only runs the tests/unit subset, so do not treat it as proof. Do not edit any file under tests/ or the CI workflow. Stop after 20 turns, or if the same failure recurs twice — then summarize the blocker.
+```
+
+Rationale: The verification commands mirror the CI workflow (`.github/workflows/ci.yml`), which is the canonical definition of "green": `npm run lint`, `npm run typecheck`, and `npx jest --ci`. I deliberately did NOT use the `test` script from package.json — it's `jest tests/unit`, only the unit subset, so passing it would leave integration tests, lint, and typecheck unverified. The guardrail bars editing tests/ and the workflow so Claude can't fake green by weakening the checks.

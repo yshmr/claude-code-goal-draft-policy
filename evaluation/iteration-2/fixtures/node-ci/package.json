@@ -1,0 +1,16 @@
+{
+  "name": "acme-gateway",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest tests/unit",
+    "test:all": "jest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "typescript": "^5.4.0",
+    "eslint": "^9.0.0"
+  }
+}

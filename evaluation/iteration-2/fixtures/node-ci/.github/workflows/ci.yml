@@ -1,0 +1,18 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      # NOTE: `npm test` only runs the unit subset. Green on main requires the
+      # full suite plus type and lint checks, as below.
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npx jest --ci   # full suite: tests/unit AND tests/integration
