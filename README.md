@@ -1,36 +1,35 @@
 # claude-code-goal-draft-policy
 
-A [Claude Code](https://code.claude.com) **Skill** that helps you author, critique, and repair
-`/goal` completion conditions — the conditions that drive Claude Code's autonomous
-"keep working across turns until X is done" loop.
+[Claude Code](https://code.claude.com) の **Skill** です。`/goal` の完了条件
+（Claude Code が「Xが終わるまでターンをまたいで自律的に作業し続ける」ループを駆動する条件）
+の作成・添削・修復を支援します。
 
-> **What is `/goal`?** `/goal <condition>` sets a completion condition; after each
-> turn a small fast model checks whether it holds, and if not, Claude starts
-> another turn on its own. It shipped in Claude Code **v2.1.139 (2026-05-11)**.
-> Official docs: <https://code.claude.com/docs/en/goal>
+> **`/goal` とは？** `/goal <条件>` は完了条件を設定するコマンドで、各ターン後に小型の
+> 高速モデルが条件充足を判定し、未達なら Claude が自分で次のターンを開始します。
+> Claude Code **v2.1.139（2026-05-11）** で追加されました。
+> 公式ドキュメント: <https://code.claude.com/docs/en/goal>
 
-## Why this exists
+## なぜ必要か
 
-A vague condition either never completes (burning turns) or completes falsely
-(Claude declares victory and the evaluator believes it). The load-bearing
-constraint is that **the evaluator never runs tools — it only judges what Claude
-has already surfaced as text in the conversation.** So a good condition must be
-verifiable straight from the transcript.
+曖昧な条件は、いつまでも完了しない（ターンを浪費する）か、誤って完了する
+（Claude が「達成」と主張し評価器がそれを信じる）かのどちらかになります。核心の制約は、
+**評価器はツールを実行せず、会話にテキストとして出た内容だけで判定する**という点です。
+したがって良い条件は、トランスクリプトから直接検証できるものでなければなりません。
 
-This skill turns a rough request into a **ready-to-paste `/goal ...` line** built
-from five elements:
+このスキルは、ざっくりした依頼を **そのまま貼れる `/goal ...` 一行** に変換します。
+条件は5つの要素で構成します:
 
-1. **End state** — one measurable, true/false finish line
-2. **Proof command** — a real command found by inspecting the repo (not guessed)
-3. **Evidence signal** — the exact output that proves success (`0 failed`, `exit 0`, `no matches`, …)
-4. **Guardrail** — what must not change on the way (e.g. don't edit test files)
-5. **Stop clause** — a turn cap / no-progress trigger so an impossible goal can't run forever
+1. **終了状態（End state）** — 測定可能で真偽が付く1つのゴール
+2. **証明コマンド（Proof command）** — リポジトリを調べて見つけた実在するコマンド（推測しない）
+3. **証拠シグナル（Evidence signal）** — 成功を示す正確な出力（`0 failed`、`exit 0`、`no matches` など）
+4. **ガードレール（Guardrail）** — 途中で壊してはいけないもの（例: テストファイルを編集しない）
+5. **停止句（Stop clause）** — 達成不能な条件が無限に走らないためのターン上限／停滞検知
 
-It also **critiques and repairs** an existing goal ("why won't this complete?").
+既存のゴール（「なぜ完了しないのか？」）の **添削・修復** もできます。
 
-## Install
+## インストール
 
-Copy the skill folder into your personal skills directory:
+スキルフォルダを個人スキルディレクトリにコピーします:
 
 ```bash
 # macOS / Linux
@@ -40,65 +39,63 @@ cp -r goal-draft-policy ~/.claude/skills/
 Copy-Item -Recurse goal-draft-policy $env:USERPROFILE\.claude\skills\
 ```
 
-Then it triggers automatically when you ask for autonomous, verifiable-end-state
-work, or invoke it directly with `/goal-draft-policy`. (Requires Claude Code with
-Skills support; `/goal` itself needs v2.1.139+.)
+これで、自律的で検証可能な終了状態を持つ作業を依頼したときに自動で発火します。
+直接呼び出す場合は `/goal-draft-policy`。（Skills対応の Claude Code が必要。`/goal` 自体は
+v2.1.139以降が必要です。）
 
-## Provenance labels
+## 出所ラベル（Provenance labels）
 
-Because the only official material on `/goal` is a single docs page (there is **no
-official skill** for authoring conditions), `SKILL.md` separates fact from
-synthesis and tags every section:
+`/goal` に関する公式情報はドキュメント1ページのみで、**条件作成のための公式スキルは存在しません**。
+そこで `SKILL.md` は事実と独自の合成を分離し、各セクションにラベルを付けています:
 
-- **`[official]`** — stated in the docs (distilled in [`references/official-goal-reference.md`](goal-draft-policy/references/official-goal-reference.md))
-- **`[method]`** — this skill's own synthesis on top of official facts
-- **`[inference]`** — a deduction the docs do not confirm; hold loosely
-- **`[tested]`** — checked by a small experiment (logged in [`references/evaluator-behavior-tests.md`](goal-draft-policy/references/evaluator-behavior-tests.md))
+- **`[official]`** — ドキュメントに明記（[`references/official-goal-reference.md`](goal-draft-policy/references/official-goal-reference.md) に蒸留）
+- **`[method]`** — 公式事実の上に構築した、このスキル独自の手法
+- **`[inference]`** — ドキュメントが確認していない推論。断定せず扱う
+- **`[tested]`** — 小規模な実験で確認済み（[`references/evaluator-behavior-tests.md`](goal-draft-policy/references/evaluator-behavior-tests.md) にログ）
 
-## Repository layout
+## リポジトリ構成
 
 ```
-goal-draft-policy/          the installable skill
-  SKILL.md                  the authoring method (provenance-labeled)
+goal-draft-policy/          インストール可能なスキル本体
+  SKILL.md                  作成メソッド（出所ラベル付き）
   references/
-    official-goal-reference.md    official /goal docs, distilled  [official]
-    evaluator-behavior-tests.md   probe log behind the [tested] claims
-  evals/evals.json          test cases
+    official-goal-reference.md    公式 /goal ドキュメントの蒸留   [official]
+    evaluator-behavior-tests.md   [tested] の根拠となる実験ログ
+  evals/evals.json          テストケース
 
-evaluation/                 how the skill was validated (transparency)
-  iteration-1/              standard cases  — with-skill 100% vs no-skill 58%
-  iteration-2/              trap cases      — with-skill 100% vs no-skill ~82%
-  trigger-eval.json         20-query triggering set (with near-misses)
-  desc-opt/trigger-results.md   triggering result + root-cause note
+evaluation/                 スキルの検証記録（透明性のため）
+  iteration-1/              標準ケース  — スキルあり100% / なし58%
+  iteration-2/              罠ケース    — スキルあり100% / なし約82%
+  trigger-eval.json         20問のトリガー評価セット（近似ミス含む）
+  desc-opt/trigger-results.md   トリガー精度の結果と原因分析メモ
 ```
 
-## Validation summary (and honest caveats)
+> 注: `SKILL.md`・`references/`・`evaluation/` 配下の `goal.md`（eval出力）・`trigger-eval.json`
+> などは、Claudeが読む動作定義／実際に生成・実行された記録として **英語のまま** 保持しています。
 
-The skill was measured, not just written:
+## 検証サマリー（と正直な注意点）
 
-- **Output quality** — spawned with-skill vs. no-skill runs on real fixtures. The
-  skill scored **100%** across two iterations (including CI-vs-`package.json`
-  disagreement, scope-inflation, and no-repo cases); the no-skill baseline
-  reliably dropped the stop clause, latest-turn anchor, and guardrail — sometimes
-  writing "do not stop until…", the exact runaway the tool is meant to prevent.
-- **Triggering** — 3 independent judges scored the description **20/20** on a set
-  with hard near-misses (`/loop`, Stop hooks, Agent SDK, OKRs, one-off runs).
+このスキルは書いただけでなく、計測しています:
 
-Caveats, stated plainly: the triggering test is a **proxy** for the real
-`available_skills` gate; the evaluator probes use a **reconstructed** evaluator
-prompt with small sample sizes; and one iteration-2 baseline was partly
-contaminated. Numbers are strong signals, not guarantees. (The official
-`skill-creator` optimization loop could not produce numbers here due to a
-Windows-portability bug — `select.select()` on a subprocess pipe; see the
-root-cause note.)
+- **出力品質** — 実際のfixtureに対しスキルあり／なしのランを実行。スキルは2イテレーション通じて
+  **100%**（CI設定とpackage.jsonの食い違い・スコープ詐称・リポジトリ無しのケースを含む）。
+  一方スキルなしのベースラインは、停止句・最新ターンのアンカー・ガードレールを毎回落とし、
+  時には「do not stop until…（〜するまで止まるな）」という、まさにこのツールが防ぐべき暴走条件を書きました。
+- **トリガー** — 3名の独立した判定者が、難しめの近似ミス（`/loop`、Stopフック、Agent SDK、OKR、
+  単発実行）を含むセットで説明文を **20/20** と評価しました。
 
-## Disclaimer
+正直な注意点: トリガー検証は実際の `available_skills` 発火機構の **近似** です。評価器の実験は
+**再構成した** 評価器プロンプトと小さいサンプルサイズを用いています。iteration-2のベースラインの
+一部は条件が混入しています。数値は強い示唆であって保証ではありません。（公式の `skill-creator`
+最適化ループはこの環境では数値を出せませんでした ── サブプロセスのパイプに対する `select.select()`
+というWindows移植性バグのため。原因分析メモを参照。）
 
-Not affiliated with or endorsed by Anthropic. Built from public documentation and
-the author's own experiments; the `[inference]`/`[tested]` parts are not official.
-Verify against the [official docs](https://code.claude.com/docs/en/goal), which
-win if they ever disagree.
+## 免責事項
 
-## License
+Anthropic とは無関係で、公認もされていません。公開ドキュメントと作者自身の実験に基づいて構築しており、
+`[inference]`／`[tested]` の部分は公式ではありません。[公式ドキュメント](https://code.claude.com/docs/en/goal)
+で検証してください。両者が食い違う場合は公式が優先されます。
 
-MIT — see [LICENSE](LICENSE).
+## ライセンス
+
+MIT — [LICENSE](LICENSE) を参照。

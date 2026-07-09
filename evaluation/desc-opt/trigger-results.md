@@ -1,43 +1,36 @@
-# Description triggering — result
+# 説明文のトリガー精度 — 結果
 
-The official `skill-creator` optimization loop (`run_loop.py`) could not run in
-this environment. **Root cause: a Windows-portability bug in
-`skill-creator/scripts/run_eval.py:108`**, which calls
-`select.select([process.stdout], [], [], 1.0)` on the `claude -p` subprocess's
-stdout **pipe**. On Unix `select()` accepts pipes; on Windows the `select` module
-accepts only sockets, so a pipe raises `OSError: [WinError 10038]` (WSAENOTSOCK).
-run_eval catches this per query and counts it as "not triggered", so every query
-failed and the loop reported recall 0% — an artifact of the tooling, not the
-description. It is NOT an auth/nesting problem (`claude -p "PONG"` works directly),
-not the background sandbox, and not the parallelism; those were ruled out. (Two
-earlier, separate hurdles — a cp932 decode error and a missing output dir — were
-fixed with PYTHONUTF8=1 and mkdir before this fundamental blocker surfaced.)
+公式の `skill-creator` 最適化ループ（`run_loop.py`）はこの環境で実行できませんでした。
+**根本原因は `skill-creator/scripts/run_eval.py:108` のWindows移植性バグ** で、`claude -p`
+サブプロセスの標準出力**パイプ**に対して `select.select([process.stdout], [], [], 1.0)` を
+呼んでいます。Unixでは `select()` はパイプを扱えますが、Windowsの `select` モジュールは
+ソケットしか受け付けないため、パイプを渡すと `OSError: [WinError 10038]`（WSAENOTSOCK）が
+発生します。run_eval はこれをクエリ単位で握りつぶし「トリガーせず」と数えるため、全クエリが失敗し
+ループは recall 0% と報告しました ── 説明文ではなくツール側の副作用です。これは認証／ネストの
+問題ではなく（`claude -p "PONG"` は直接実行で成功）、バックグラウンドのサンドボックスでも、
+並列でもありません（いずれも切り分け済み）。（先行した別の2つのハードル ── cp932デコードエラーと
+出力ディレクトリ欠如 ── は、この本質的なブロッカーが表面化する前に PYTHONUTF8=1 と mkdir で解消済み。）
 
-Instead the current description was evaluated with a
-controlled proxy: three independent judge subagents (session model) were shown the
-description as the only available skill and asked to trigger / not-trigger on each
-of 20 queries.
+代わりに、現行の説明文を制御可能な代替手段で評価しました：3名の独立した判定サブエージェント
+（セッションのモデル）に、説明文を唯一の利用可能スキルとして提示し、20クエリそれぞれで
+トリガーする／しないを判定させました。
 
-## Eval set
-10 should-trigger (authoring/critiquing/repairing a `/goal` condition, including
-three without the word "goal") + 10 should-not-trigger near-misses (`/loop`
-scheduling, Stop hook, Agent SDK, OKRs, career goal, one-off "run now", `/goal`
-explanation questions). See `../trigger-eval.json`.
+## 評価セット
+should-trigger 10問（`/goal`条件の作成・添削・修復。うち3問は「goal」という語を含まない）＋
+should-not-trigger の近似ミス10問（`/loop`スケジューリング、Stopフック、Agent SDK、OKR、
+キャリア目標、単発の「今すぐ実行」、`/goal`の説明質問）。`../trigger-eval.json` を参照。
 
-## Result
-All three judges unanimously scored **20/20 correct**: every should-trigger → yes,
-every should-not-trigger → no. Precision 100%, recall 100%, accuracy 100%.
+## 結果
+3名の判定者が全員一致で **20/20正解**：should-trigger は全て yes、should-not-trigger は全て no。
+精度100%、再現率100%、正確度100%。
 
-## Decision
-**Keep the current description unchanged.** It already discriminates perfectly on
-this set, including the hard near-misses. Rewriting a description that scores 100%
-risks overfitting / regressing it.
+## 判断
+**現行の説明文を変更しない。** このセットでは、難しめの近似ミスを含めて既に完璧に判別している。
+100%の説明文を書き換えると、過学習／劣化のリスクがある。
 
-## Caveats
-- This is a proxy for the real `available_skills` triggering gate; the judges were
-  given an explicit trigger/no-trigger instruction, which is easier than the
-  ambient real-world gate. 100% here is a strong positive signal, not a guarantee.
-- 20 queries is small; unanimous 100% may also mean the near-misses could be harder.
-- Labeling `/goal` *explanation* questions (19, 20) as should-not-trigger is a
-  deliberate design choice (this skill authors conditions; it doesn't exist to
-  explain internals) — defensible but arguable.
+## 注意点
+- これは実際の `available_skills` 発火機構の近似であり、判定者には明示的なトリガー可否の指示を
+  与えたため、実運用の周辺的な発火判断より容易。ここでの100%は強い good signal であって保証ではない。
+- 20問は小規模。全員一致の100%は、近似ミスがもっと難しくあり得たことも意味する。
+- `/goal` の *説明* 質問（19, 20）を should-not-trigger とラベルしたのは意図的な設計判断
+  （このスキルは条件を作成するものであり、内部挙動を解説するために存在するのではない）── 妥当だが議論の余地はある。

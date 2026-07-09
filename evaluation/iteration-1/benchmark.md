@@ -1,74 +1,69 @@
-# goal-draft-policy — iteration-1 benchmark
+# goal-draft-policy — iteration-1 ベンチマーク
 
-Baseline = same task, same model, **no skill**. with_skill = the agent reads
-SKILL.md + references first.
+ベースライン = 同じタスク・同じモデルで **スキルなし**。with_skill = エージェントが先に
+SKILL.md ＋ references を読んでから実行。
 
-## Assertions & grading
+## アサーションと採点
 
-### eval-0 author-goal-node-tests
-| # | assertion | with_skill | baseline |
+### eval-0 author-goal-node-tests（Nodeテストのゴール作成）
+| # | アサーション | with_skill | ベースライン |
 |---|-----------|:---:|:---:|
-| 1 | proof command discovered from repo (test:auth / npm test) | ✅ `npm run test:auth` | ✅ `npm run test:auth` |
-| 2 | latest-turn / fresh-evidence anchor | ✅ "in the most recent turn" | ❌ none |
-| 3 | evidence signal (0 failed / exit 0) | ✅ 0 failed | ✅ exit 0 |
-| 4 | guardrail (don't edit test files) | ✅ | ❌ none |
-| 5 | stop clause (turn cap / bound) | ✅ 15 turns + repeat-failure | ❌ none |
-| 6 | ready-to-paste `/goal` line | ✅ | ✅ |
-| | **score** | **6/6** | **3/6** |
+| 1 | 証明コマンドをリポジトリから発見（test:auth / npm test） | ✅ `npm run test:auth` | ✅ `npm run test:auth` |
+| 2 | 最新ターン／新鮮な証拠のアンカー | ✅「in the most recent turn」 | ❌ なし |
+| 3 | 証拠シグナル（0 failed / exit 0） | ✅ 0 failed | ✅ exit 0 |
+| 4 | ガードレール（テストファイルを編集しない） | ✅ | ❌ なし |
+| 5 | 停止句（ターン上限／バウンド） | ✅ 15ターン＋失敗反復 | ❌ なし |
+| 6 | そのまま貼れる `/goal` 行 | ✅ | ✅ |
+| | **スコア** | **6/6** | **3/6** |
 
-### eval-1 repair-vague-goal
-| # | assertion | with_skill | baseline |
+### eval-1 repair-vague-goal（曖昧なゴールの修復）
+| # | アサーション | with_skill | ベースライン |
 |---|-----------|:---:|:---:|
-| 1 | diagnoses subjective / unverifiable-from-transcript | ✅ | ✅ |
-| 2 | diagnoses missing bound / unbounded | ✅ | ✅ |
-| 3 | states evaluator can't run tools (judges transcript) | ✅ | ❌ weak |
-| 4 | repaired goal is measurable (lint/test/threshold) | ✅ | ✅ |
-| 5 | repaired goal has a stop clause | ✅ 20 turns | ❌ "do not stop until…" |
-| 6 | repaired goal has latest-turn anchor / proof cmd | ✅ | ❌ none |
-| | **score** | **6/6** | **3/6** |
+| 1 | 主観的／トランスクリプトで検証不能と診断 | ✅ | ✅ |
+| 2 | バウンド無し／無制限と診断 | ✅ | ✅ |
+| 3 | 評価器はツールを実行できない（トランスクリプトで判定）と明言 | ✅ | ❌ 弱い |
+| 4 | 修復後のゴールが測定可能（lint/test/しきい値） | ✅ | ✅ |
+| 5 | 修復後のゴールに停止句がある | ✅ 20ターン | ❌「do not stop until…」 |
+| 6 | 修復後のゴールに最新ターンのアンカー／証明コマンドがある | ✅ | ❌ なし |
+| | **スコア** | **6/6** | **3/6** |
 
-### eval-2 author-goal-python-migration
-| # | assertion | with_skill | baseline |
+### eval-2 author-goal-python-migration（Python移行のゴール作成）
+| # | アサーション | with_skill | ベースライン |
 |---|-----------|:---:|:---:|
-| 1 | exhaustive end state (no query_raw call sites) | ✅ | ✅ |
-| 2 | proof via grep/rg count (0 matches) | ✅ | ✅ |
-| 3 | real test command from pyproject (pytest) | ✅ `pytest -q` | ✅ `pytest -q` |
-| 4 | latest-turn anchor | ✅ | ❌ none |
-| 5 | guardrail (tests / db.query signature / keep def) | ✅ | ⚠️ excludes def only |
-| 6 | stop clause (turn cap / no-progress) | ✅ | ❌ "do not stop early" |
-| 7 | rg pattern excludes the definition | ✅ `\.query_raw\(` | ✅ excludes def |
-| | **score** | **7/7** | **5/7** |
+| 1 | 網羅的な終了状態（query_raw の呼び出しが残っていない） | ✅ | ✅ |
+| 2 | grep/rg 件数による証明（0 matches） | ✅ | ✅ |
+| 3 | pyproject 由来の実テストコマンド（pytest） | ✅ `pytest -q` | ✅ `pytest -q` |
+| 4 | 最新ターンのアンカー | ✅ | ❌ なし |
+| 5 | ガードレール（tests / db.query シグネチャ / 定義を残す） | ✅ | ⚠️ 定義除外のみ |
+| 6 | 停止句（ターン上限／停滞検知） | ✅ | ❌「do not stop early」 |
+| 7 | rg パターンが定義自体を除外している | ✅ `\.query_raw\(` | ✅ 定義を除外 |
+| | **スコア** | **7/7** | **5/7** |
 
-## Totals
+## 合計
 
-| config | pass rate | mean tokens | mean duration |
+| 構成 | 合格率 | 平均トークン | 平均所要 |
 |--------|:---:|:---:|:---:|
-| **with_skill** | **19/19 = 100%** | ~39.6k | ~46s |
-| baseline (no skill) | 11/19 = 58% | ~32.9k | ~64s |
+| **with_skill** | **19/19 = 100%** | 約39.6k | 約46秒 |
+| ベースライン（スキルなし） | 11/19 = 58% | 約32.9k | 約64秒 |
 
-Per-run timing (tokens / ms):
+ラン別のタイミング（トークン / ミリ秒）:
 - eval-0 with 40662 / 44873 · baseline 33705 / 81081
 - eval-1 with 38046 / 36739 · baseline 31893 / 50891
 - eval-2 with 39991 / 57424 · baseline 33181 / 60097
 
-## Analyst notes
+## アナリスト所見
 
-- **Where the skill adds value is narrow but consistent.** A strong base model
-  already discovers the right command (test:auth, pytest) and writes an exhaustive
-  end state — assertions 1/3/7 pass with or without the skill, so those aren't
-  discriminating here. The skill's lift is concentrated in **three things the
-  baseline reliably omits: the latest-turn anchor, an explicit test-editing
-  guardrail, and a stop clause.**
-- **Most striking: the baseline reproduces the exact bug the user complained about.**
-  In eval-1 and eval-2 the no-skill version wrote "do not stop until…" — an
-  *unbounded* condition — even in eval-1 where the whole complaint was "it never
-  finishes." The skill never does this. This is the strongest evidence the skill
-  is worth having.
-- **Token overhead ~+20%** (reading SKILL.md + references) but **duration was
-  lower** with the skill (clear procedure → faster convergence). Duration N=1 per
-  cell is noisy; treat as indicative only.
-- **The eval set may be too easy.** Baseline scored 58%, not near-zero, because
-  the base model is already good at command discovery. A harder iteration-2 should
-  target the skill's untested claims: (a) the scope-inflation trap (subset run
-  narrated as "all pass"), (b) a repo where CI config disagrees with package.json
-  scripts, (c) a truly no-repo/artifact-only goal.
+- **スキルの価値が出る箇所は狭いが一貫している。** 強いベースモデルは、正しいコマンド
+  （test:auth, pytest）の発見も網羅的な終了状態の記述も既にできる ── アサーション1/3/7は
+  スキルの有無に関わらず合格し、ここでは差別化要因にならない。スキルの効き所は、
+  **ベースラインが毎回落とす3点：最新ターンのアンカー、テスト改変禁止のガードレール、停止句** に集中している。
+- **最も印象的：ベースラインはユーザーが訴えたバグそのものを再現する。** eval-1とeval-2で
+  スキルなし版は「do not stop until…」＝ **無制限** の条件を書いた ── しかも eval-1 は
+  「終わらない」という相談そのものだったにも関わらず。スキルは一度もこれをしない。
+  これがスキルを持つ価値の最も強い証拠。
+- **トークンは約+20%**（SKILL.md＋references読み込み）だが、所要時間はスキルありの方が短かった
+  （明確な手順で収束が速い）。所要はセル1回のみでノイズが大きく、参考値。
+- **評価セットが易しすぎる可能性。** ベースラインが58%と0%近くまで落ちないのは、ベースモデルが
+  既にコマンド発見に強いため。難しめのiteration-2では、スキルの未検証主張を狙うべき：
+  (a) スコープ詐称の罠（サブセット実行を「全部通った」と語る）、(b) CI設定とpackage.jsonの
+  スクリプトが食い違うリポジトリ、(c) 真にリポジトリ無し／成果物ベースのゴール。

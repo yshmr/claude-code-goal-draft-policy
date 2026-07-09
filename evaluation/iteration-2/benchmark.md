@@ -1,64 +1,60 @@
-# goal-draft-policy — iteration-2 benchmark (harder cases)
+# goal-draft-policy — iteration-2 ベンチマーク（難しめのケース）
 
-Targets the skill's untested claims: CI-vs-package.json disagreement,
-scope-inflation hardening, and the no-repo artifact branch.
+スキルの未検証主張を狙う: CI設定とpackage.jsonの食い違い、スコープ詐称のハーデニング、
+リポジトリ無しの成果物ベース分岐。
 
-## Grading
+## 採点
 
-### eval-3 ci-disagrees-with-package-json (clean comparison)
-| # | assertion | with_skill | baseline |
+### eval-3 ci-disagrees-with-package-json（クリーンな比較）
+| # | アサーション | with_skill | ベースライン |
 |---|-----------|:---:|:---:|
-| 1 | proof = CI canonical green (lint+typecheck+FULL jest), not `npm test` | ✅ | ✅ |
-| 2 | notes `npm test` is only the unit subset | ✅ | ✅ |
-| 3 | latest-turn anchor | ✅ | ❌ |
-| 4 | guardrail (no editing tests / CI workflow) | ✅ | ✅ |
-| 5 | stop clause | ✅ 20 turns + repeat | ❌ "keep working until…" |
-| | **score** | **5/5** | **3/5** |
+| 1 | 証明＝CIの正規の緑（lint+typecheck+フルjest）、`npm test`ではない | ✅ | ✅ |
+| 2 | `npm test` はunitサブセットだけだと明記 | ✅ | ✅ |
+| 3 | 最新ターンのアンカー | ✅ | ❌ |
+| 4 | ガードレール（tests / CIワークフローを編集しない） | ✅ | ✅ |
+| 5 | 停止句 | ✅ 20ターン＋反復 | ❌「keep working until…」 |
+| | **スコア** | **5/5** | **3/5** |
 
-### eval-4 harden-against-scope-inflation
-| # | assertion | with_skill | baseline |
+### eval-4 harden-against-scope-inflation（スコープ詐称のハーデニング）
+| # | アサーション | with_skill | ベースライン |
 |---|-----------|:---:|:---:|
-| 1 | diagnoses unpinned command/scope → subset satisfies | ✅ | ✅ |
-| 2 | pins exact full invocation, forbids filters | ✅ | ✅ |
-| 3 | requires visible total count (subset detectable) | ✅ | ✅ |
-| 4 | keeps latest-turn anchor + stop clause | ✅ | ✅ |
-| | **score** | **4/4** | **4/4** |
+| 1 | コマンド／スコープ未固定→サブセットで充足、と診断 | ✅ | ✅ |
+| 2 | 正確なフル実行を固定し、フィルタを禁止 | ✅ | ✅ |
+| 3 | 可視のテスト総数を要求（サブセットを検知可能に） | ✅ | ✅ |
+| 4 | 最新ターンのアンカー＋停止句を維持 | ✅ | ✅ |
+| | **スコア** | **4/4** | **4/4** |
 
-### eval-5 no-repo-artifact-goal
-| # | assertion | with_skill | baseline |
+### eval-5 no-repo-artifact-goal（リポジトリ無しの成果物ゴール）
+| # | アサーション | with_skill | ベースライン |
 |---|-----------|:---:|:---:|
-| 1 | artifact-based evidence, no invented test runner | ✅ | ✅ |
-| 2 | fetches merged-PR list (`gh pr list --search merged`) | ✅ | ✅ |
-| 3 | bullet-per-PR count comparison | ✅ | ✅ |
-| 4 | re-fetch / latest-turn anchor | ✅ | ✅ |
-| 5 | stop clause / failure handling | ✅ 15 turns + fail-stop | ⚠️ fail-stop, no turn cap |
-| | **score** | **5/5** | **~4.5/5** |
+| 1 | 成果物ベースの証拠、テストランナーを捏造しない | ✅ | ✅ |
+| 2 | マージ済みPR一覧を取得（`gh pr list --search merged`） | ✅ | ✅ |
+| 3 | PRごとの箇条書き件数の照合 | ✅ | ✅ |
+| 4 | 再取得／最新ターンのアンカー | ✅ | ✅ |
+| 5 | 停止句／失敗ハンドリング | ✅ 15ターン＋失敗停止 | ⚠️ 失敗停止のみ、ターン上限なし |
+| | **スコア** | **5/5** | **約4.5/5** |
 
-## Totals
+## 合計
 
-| config | pass rate | mean tokens | mean duration |
+| 構成 | 合格率 | 平均トークン | 平均所要 |
 |--------|:---:|:---:|:---:|
-| **with_skill** | **14/14 = 100%** | ~39.8k | ~43s |
-| baseline | ~11.5/14 ≈ 82% | ~33.2k | ~64s |
+| **with_skill** | **14/14 = 100%** | 約39.8k | 約43秒 |
+| ベースライン | 約11.5/14 ≈ 82% | 約33.2k | 約64秒 |
 
-## Analyst notes (honest)
+## アナリスト所見（正直に）
 
-- **The skill held at 100% even on the traps** — including the CI-vs-package.json
-  mismatch and the scope-inflation dodge. Notably, the with_skill agent on eval-4
-  explicitly cited "the 'subset narrated as all pass' loophole the skill warns
-  about" — i.e. the residual-risk note added to SKILL.md after the earlier probe
-  actually fired and was used. That validates that addition.
-- **The gap narrowed vs iteration-1 (82% vs 58%) — partly a methodology flaw, own it.**
-  For eval-4 and eval-5 the baseline *prompt* included the tool-blindness fact
-  ("a small fast model … cannot run tools itself"), which handed the baseline the
-  skill's single most important insight. Those two cells are therefore contaminated
-  and shouldn't be read as clean wins/ties.
-- **eval-3 is the clean comparison** (no leak into its baseline prompt) and there
-  the skill won 5/5 vs 3/5 — the *same* failure mode as every iteration-1 authoring
-  case: the baseline nails command discovery (even the CI trap) but drops the
-  **latest-turn anchor and the stop clause**, and writes "keep working until…".
-- **No skill defect surfaced.** The harder cases did not expose a gap in SKILL.md;
-  they exercised its CI-authoritative rule, scope-pinning, and no-repo branch, all
-  of which produced correct output. Recommendation: no content change needed.
-- **Process fix for any future iteration:** keep the baseline prompt neutral — do
-  not state the evaluator's tool-blindness in it, or the comparison is unfair.
+- **スキルは罠でも100%を維持** ── CIとpackage.jsonの食い違いも、スコープ詐称のかわしも含めて。
+  特に eval-4 の with_skill エージェントは「スキルが警告する『サブセットを全部通ったと語る』抜け道」
+  と明示的に言及した ── つまり以前の実測後に SKILL.md へ追記した残存リスク注記が実際に発火し、
+  使われた。この追記の妥当性が裏付けられた。
+- **iteration-1（58%）よりベースラインとの差が縮んだ（82%）── 一部は方法論上の欠陥。正直に告白する。**
+  eval-4とeval-5では、ベースラインの *プロンプト* に「評価器はツールを実行できない」という
+  スキルの最重要洞察を私が漏らしてしまった。この2セルは条件が混入しており、
+  クリーンな勝ち／引き分けとは読めない。
+- **eval-3 がクリーンな比較**（ベースラインのプロンプトに漏れなし）で、そこではスキルが 5/5 vs 3/5 で勝利
+  ── iteration-1のあらゆる作成ケースと同じ失敗パターン：ベースラインはコマンド発見（CIの罠も）は
+  こなすが、**最新ターンのアンカーと停止句を落とし**、「keep working until…」と書く。
+- **スキルの欠陥は出なかった。** 難しめのケースは SKILL.md のギャップを露呈せず、CI優先ルール・
+  スコープ固定・リポジトリ無し分岐を発動させ、いずれも正しい出力を生んだ。推奨：内容の変更は不要。
+- **今後のイテレーションへのプロセス修正：** ベースラインのプロンプトは中立に保つこと ──
+  評価器のツール非実行をそこに書くと、比較が不公平になる。
