@@ -1,5 +1,6 @@
 {
   "skill_name": "goal-draft-policy",
+  "note": "Paths in `files` are relative to the repository root (github.com/yshmr/claude-code-goal-draft-policy).",
   "iteration": 2,
   "evals": [
     {
@@ -7,7 +8,7 @@
       "name": "ci-disagrees-with-package-json",
       "prompt": "In this repo, I want Claude to keep going on its own until everything that CI checks is green. Set me up a /goal.",
       "expected_output": "A /goal whose proof uses the CANONICAL green defined by the CI workflow (lint + typecheck + the FULL jest suite via `npx jest`/`test:all`), NOT the misleading `npm test` which only runs the unit subset. Bonus: notes that `npm test` is a subset. Plus latest-turn anchor, guardrail, stop clause.",
-      "files": ["../goal-draft-policy-workspace/iteration-2/fixtures/node-ci"]
+      "files": ["evaluation/iteration-2/fixtures/node-ci"]
     },
     {
       "id": 4,

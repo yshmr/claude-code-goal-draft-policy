@@ -104,5 +104,5 @@ combine it with `/goal` so each goal turn runs unattended.
 
 ## Source
 
-Official documentation: <https://code.claude.com/docs/en/goal> (fetched during the
-session that created this skill; re-fetch to refresh).
+Official documentation: <https://code.claude.com/docs/en/goal> (fetched
+2026-07-09; re-fetch to refresh).

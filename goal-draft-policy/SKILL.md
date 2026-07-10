@@ -101,7 +101,7 @@ judgeable.
 | 1 | **End state** | What is true when done? | "every test in `tests/auth` passes" |
 | 2 | **Proof action** | What command must Claude run? | "run `pytest tests/auth -q`" |
 | 3 | **Evidence signal** | What must appear in the output? | "the final line shows `0 failed`" |
-| 4 | **Guardrail** | What must not change on the way? | "do not edit any file under `tests/`" |
+| 4 | **Guardrail** | What must not change on the way? | "do not modify or delete any file under `tests/`" |
 | 5 | **Stop clause** | When to give up? | "stop after 15 turns, or if the same error repeats twice — then summarize what's blocking" |
 
 Elements 1–3 make it *judgeable*, 4 protects *quality*, 5 protects against
@@ -142,7 +142,7 @@ user's sentence. Apply the rules in order.
   | Test runner (pytest/jest/go test/…) | the summary line shows `0 failed` (or the passing count) |
   | Build / typecheck | `exit code 0` and zero errors in the output |
   | Linter | `0 problems` / `0 errors` |
-  | grep / rg (absence check) | `no matches` / a `0` count |
+  | grep / rg (absence check) | a printed count of `0` (e.g. pipe the match list through `wc -l`) — bare `rg` prints nothing on zero matches, and empty output is weak evidence |
   | git cleanliness | `git status --short` prints nothing |
   | Queue / backlog | the listing command prints an empty list |
 
@@ -202,7 +202,7 @@ in src/index.ts unchanged. Stop after 20 turns.
   an artifact-based signal: a file exists, or its content contains a specific
   string Claude prints back. Everything else in the mapping is unchanged.
 
-## Copy-paste template
+## Copy-paste template — [method]
 
 ```
 /goal <end state>. Prove it by, in the most recent turn, running <command> and
@@ -262,8 +262,11 @@ this goal"), diagnose it against the constraint and the 5 elements. Check for:
 
 - **Unjudgeable from transcript** — needs the evaluator to run something itself,
   or references file state Claude never prints. → add an explicit proof command.
-- **Stale-evidence risk** — no "latest turn" anchor, so an old success sticks. →
-  anchor to the most recent run.
+- **No fresh-proof directive** — nothing makes Claude re-run the check after each
+  change. Per the probe (`references/evaluator-behavior-tests.md`) the evaluator
+  already discounts successes that predate the last change, so the real failure
+  is a stalled loop ("changed code, never re-verified"), not a re-counted stale
+  win. → require the proof "in the most recent turn" and pin the scope.
 - **Subjective terms** — "clean", "properly", "works". → operationalize.
 - **Missing stop clause** — can loop forever if impossible. → add a bound.
 - **Wrong/imaginary command** — names a script the repo lacks. → replace with the
@@ -283,7 +286,7 @@ from the official docs; the exact condition strings below are this skill's.
 ```
 /goal Every test under tests/auth passes. Prove it by, in the most recent turn,
 running `pytest tests/auth -q` and showing the summary line reports 0 failed.
-Do not edit any file under tests/. Stop after 15 turns, or if the same failure
+Do not modify or delete any file under tests/. Stop after 15 turns, or if the same failure
 recurs twice — then summarize the blocker.
 ```
 
@@ -297,16 +300,19 @@ after 10 turns.
 **Exhaustive API migration**
 ```
 /goal No call sites of oldApi( remain in src/. Prove it in the most recent turn
-by running `rg -n "oldApi\(" src/` (0 matches) and `npm test` (exit 0). Keep the
-public exports in src/index.ts unchanged. Stop after 25 turns or if match count
-doesn't drop for 2 turns — then report what's left.
+by running `rg -n "oldApi\(" src/ | wc -l` and showing it prints 0, plus
+`npm test` (exit 0). Keep the public exports in src/index.ts unchanged. Stop
+after 25 turns or if the printed count doesn't drop for 2 turns — then report
+what's left.
 ```
 
 **Backlog / queue drain**
 ```
-/goal Every issue labeled goal-batch is closed. Each turn run
-`gh issue list --label goal-batch --state open` and show the list; done when it
-is empty. Stop after 30 turns.
+/goal Every issue labeled goal-batch is closed, each with a fix. Each turn run
+`gh issue list --label goal-batch --state open --json number --jq length` and
+show the printed count; done when it prints 0. Do not close an issue without a
+merged fix (commit or PR) that addresses it — closing without a fix does not
+count. Stop after 30 turns.
 ```
 
 **File-size refactor**
@@ -320,8 +326,10 @@ in src/index.ts unchanged. Stop after 20 turns.
 
 - `/goal make the code better` — no end state, no proof, no stop. Unjudgeable.
 - `/goal until it works in production` — not observable in the transcript.
-- `/goal when the tests pass` — no proof command named and no latest-turn anchor;
-  the evaluator may accept a stale "tests passed" from earlier.
+- `/goal when the tests pass` — no proof command named and no fresh-proof
+  directive: nothing makes Claude re-run the tests after each change (the loop
+  stalls on unverified state), and the scope is unpinned — a subset run narrated
+  as "tests pass" could satisfy it.
 - `/goal fix all the bugs` — unbounded and subjective; will loop or false-complete.
 
 Rewrite each into the 5-element form before handing it back.
