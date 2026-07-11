@@ -43,6 +43,20 @@
       "prompt": "I'm in an empty folder — no code project here. I want to hand off to Claude and have it keep drafting RELEASE_NOTES.md until it has one bullet for every pull request merged this week, then stop on its own. Write me a /goal.",
       "expected_output": "A /goal that, lacking any test command, uses artifact-based evidence: gets the merged-PR list (e.g. `gh pr list --state merged --search 'merged:>=<date>'`) and checks RELEASE_NOTES.md contains a bullet per PR, comparing counts in the most recent turn. Should NOT invent a test runner. Includes a stop clause.",
       "files": []
+    },
+    {
+      "id": 6,
+      "name": "author-goal-japanese",
+      "prompt": "このNode/TypeScriptリポジトリで作業しています。認証まわりのテストが全部通るまでClaudeに任せて自走させたいです。毎ターンの承認はしたくありません。/goal をセットアップしてください。",
+      "expected_output": "A ready-to-paste /goal line with a repo-discovered proof command (test:auth / npm test), fresh-evidence anchor, evidence signal, guardrail, and stop clause, per SKILL.md's current guidance. The explanation to the user is in Japanese; the condition's language follows SKILL.md's language guidance, with command names, paths, and output signals kept verbatim.",
+      "files": ["evaluation/iteration-1/fixtures/node-app"]
+    },
+    {
+      "id": 7,
+      "name": "monorepo-workspaces-goal",
+      "prompt": "I want Claude to keep working on its own until the tests of every package in this monorepo pass. Set up a /goal.",
+      "expected_output": "A /goal whose proof covers BOTH workspaces (e.g. `npm test --workspaces`, or explicit `-w` runs for @acme/api and @acme/web) — the root package.json has NO test script, so inventing a root `npm test` is a failure. Notes the choice/ambiguity per the skill's branching rule. Latest-turn anchor, runner-appropriate evidence signals (jest vs vitest), guardrail, stop clause.",
+      "files": ["evaluation/iteration-3/fixtures/monorepo"]
     }
   ]
 }
