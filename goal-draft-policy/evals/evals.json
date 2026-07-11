@@ -1,6 +1,6 @@
 {
   "skill_name": "goal-draft-policy",
-  "note": "Paths in `files` are relative to the repository root (github.com/yshmr/claude-code-goal-draft-policy).",
+  "note": "Paths in `files` are relative to the repository root (github.com/yshmr/claude-code-goal-draft-policy). Evals 0-2 are the standard cases (iteration-1); evals 3-5 are the trap cases (iteration-2).",
   "evals": [
     {
       "id": 0,
@@ -22,6 +22,27 @@
       "prompt": "This Python service still calls the deprecated db.query_raw() helper in a few places. I want Claude to migrate every call site to the new db.query() API on its own and not stop until it's fully done and the tests still pass. Give me a /goal.",
       "expected_output": "A /goal with an exhaustive end state (no query_raw call sites remain), a proof via a grep/rg count (0 matches) AND the repo's real test command (pytest), latest-turn anchoring, a guardrail (don't change unrelated code / the db.query signature), and a stop clause.",
       "files": ["evaluation/iteration-1/fixtures/py-app"]
+    },
+    {
+      "id": 3,
+      "name": "ci-disagrees-with-package-json",
+      "prompt": "In this repo, I want Claude to keep going on its own until everything that CI checks is green. Set me up a /goal.",
+      "expected_output": "A /goal whose proof uses the CANONICAL green defined by the CI workflow (lint + typecheck + the FULL jest suite via `npx jest`/`test:all`), NOT the misleading `npm test` which only runs the unit subset. Bonus: notes that `npm test` is a subset. Plus latest-turn anchor, guardrail, stop clause.",
+      "files": ["evaluation/iteration-2/fixtures/node-ci"]
+    },
+    {
+      "id": 4,
+      "name": "harden-against-scope-inflation",
+      "prompt": "My goal is `/goal All tests pass — in the most recent turn run npm test and show 0 failed. Stop after 15 turns.` The problem: Claude keeps declaring victory after only running `npm test -- --testPathPattern=smoke` (just the smoke tests), not the whole suite. How do I harden the goal so it can't game the scope?",
+      "expected_output": "Diagnosis that the condition doesn't pin the command/scope, so a subset run satisfies it. Repaired /goal that pins the EXACT full-suite invocation and requires the run to show the full test count (not a subset), e.g. asserting the summary shows the expected total, or forbidding testPathPattern/filters. Keeps anchor + stop clause.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "no-repo-artifact-goal",
+      "prompt": "I'm in an empty folder — no code project here. I want to hand off to Claude and have it keep drafting RELEASE_NOTES.md until it has one bullet for every pull request merged this week, then stop on its own. Write me a /goal.",
+      "expected_output": "A /goal that, lacking any test command, uses artifact-based evidence: gets the merged-PR list (e.g. `gh pr list --state merged --search 'merged:>=<date>'`) and checks RELEASE_NOTES.md contains a bullet per PR, comparing counts in the most recent turn. Should NOT invent a test runner. Includes a stop clause.",
+      "files": []
     }
   ]
 }

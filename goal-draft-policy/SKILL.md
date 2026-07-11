@@ -101,7 +101,7 @@ judgeable.
 | 1 | **End state** | What is true when done? | "every test in `tests/auth` passes" |
 | 2 | **Proof action** | What command must Claude run? | "run `pytest tests/auth -q`" |
 | 3 | **Evidence signal** | What must appear in the output? | "the final line shows `0 failed`" |
-| 4 | **Guardrail** | What must not change on the way? | "do not modify or delete any file under `tests/`" |
+| 4 | **Guardrail** | What must not change on the way? | "do not modify or delete any file under `tests/` — show `git diff --stat` each turn to prove it" |
 | 5 | **Stop clause** | When to give up? | "stop after 15 turns, or if the same error repeats twice — then summarize what's blocking" |
 
 Elements 1–3 make it *judgeable*, 4 protects *quality*, 5 protects against
@@ -139,7 +139,7 @@ user's sentence. Apply the rules in order.
 
   | Command type | Success signal to require in the transcript |
   |--------------|---------------------------------------------|
-  | Test runner (pytest/jest/go test/…) | the summary line shows `0 failed` (or the passing count) |
+  | Test runner (pytest/jest/go test/…) | the summary line shows `0 failed` (or the passing count); when the full-suite size is known, also require the total (e.g. `87 total`) so a subset run can't satisfy it |
   | Build / typecheck | `exit code 0` and zero errors in the output |
   | Linter | `0 problems` / `0 errors` |
   | grep / rg (absence check) | a printed count of `0` (e.g. pipe the match list through `wc -l`) — bare `rg` prints nothing on zero matches, and empty output is weak evidence |
@@ -149,13 +149,28 @@ user's sentence. Apply the rules in order.
 - **④ Guardrail ← what the task type implies must not change.** Infer from
   context even when unstated: test-modifying tasks → "don't edit test files" (so
   Claude can't "pass" by weakening tests); refactors → "public exports unchanged";
-  migrations → "don't touch unrelated modules or dependencies". Where it's cheap,
-  make the guardrail itself checkable ("`git diff --stat` touches only `src/x/`").
+  migrations → "don't touch unrelated modules or dependencies". **Make the
+  guardrail checkable by default — [tested]:** the evaluator enforces a guardrail
+  only when evidence is on screen. In probes it caught a violation that Claude
+  narrated (4/4 refusals), a compliant run with no compliance evidence still
+  completed (4/4) — and a *silent* violation is invisible by construction. So
+  require the evidence: "each turn show `git diff --stat`; it touches only
+  `src/x/`" turns the guardrail from a promise into something the evaluator can
+  actually check.
 
 - **⑤ Stop clause ← a default bound plus a no-progress trigger.** Always add a
   turn cap; add a stall detector when the task can get stuck ("same failure twice",
   "test count doesn't improve for 2 turns"), and tell Claude to summarize the
-  blocker on stop so the user learns why.
+  blocker on stop so the user learns why. **Write the clause as an OR-branch of
+  the condition, never a free-standing sentence — [tested]:** as its own sentence
+  ("… show 0 failed. Stop after 5 turns.") the cap completed nothing (0/4 even
+  with turn numbers and a blocker summary on screen); joined as ", or stop after
+  5 turns" the same transcript completed 4/4, and the evaluator honored the
+  cap even with no stated turn numbers (3/4) — stating "turn k of N" each
+  turn remains cheap insurance. Note the mechanics of "then summarize the
+  blocker": in probes the evaluator withheld completion until the summary
+  actually appeared (4/4 refusals without it), so expect one final summarizing
+  turn after the cap — that is the clause doing its job.
 
 ### The latest-turn anchor — [tested]
 
@@ -165,10 +180,12 @@ After filling ② and ③, phrase them as **"in the most recent turn, run X and 
 against that — it wants proof that post-dates the last change. So the anchor's real
 job is the reverse: it keeps Claude *producing* fresh proof every turn, so the loop
 terminates instead of stalling on "you changed code but didn't re-verify". Keep it
-— it's cheap and it aligns Claude with what the evaluator actually demands. One
-residual gap the probe did **not** close: a run over a *subset* of tests later
-narrated as "all pass" could still slip through, so pin the scope in ① (e.g. name
-the exact path or "the full suite").
+— it's cheap and it aligns Claude with what the evaluator actually demands. The
+feared subset gap did **not** reproduce in a probe (0/4 completions for a filtered
+run narrated as "all pass", whether or not the condition pinned the command — see
+`references/evaluator-behavior-tests.md`), but the sample is small and the defense
+is cheap: still pin the scope in ①, name the exact unfiltered command in ②, and
+when the suite size is known, require the visible total in ③.
 
 ### Worked trace
 
@@ -187,8 +204,8 @@ Input (raw user sentence):
 Output (ready to paste):
 ```
 /goal No .ts file under src/ exceeds 300 lines. Prove it each turn by showing a
-line-count listing of files over the budget (empty when done). Keep the exports
-in src/index.ts unchanged. Stop after 20 turns.
+line-count listing of files over the budget (empty when done) — or stop after
+20 turns. Keep the exports in src/index.ts unchanged.
 ```
 
 ### Branching when the input is ambiguous
@@ -206,8 +223,9 @@ in src/index.ts unchanged. Stop after 20 turns.
 
 ```
 /goal <end state>. Prove it by, in the most recent turn, running <command> and
-showing its output contains <exact signal>. Constraints: <what must not change>.
-Stop after <N> turns or if <no-progress signal> — then summarize the blocker.
+showing its output contains <exact signal> — or stop after <N> turns or if
+<no-progress signal>, then summarize the blocker. Constraints: <what must not
+change>.
 ```
 
 ## Workflow — [method]
@@ -230,6 +248,10 @@ When the user asks for a goal, don't just wrap their sentence in `/goal`. Do thi
    - CI config (`.github/workflows`, `.gitlab-ci.yml`) — the canonical "what green
      means" for this repo, often the best source of the exact command
    - For "no matches" style goals, prefer a `grep -rn`/`rg` count the user can see
+   - Verify the *tools* the proof relies on actually exist in the environment
+     (`rg`, `gh`, `jq`, `wc`, …); if one is missing, fall back to an available
+     equivalent (`grep -rc`, `git log`, a shell loop) — a proof command that
+     cannot run never completes
    Pick the command that produces a **stable, greppable signal** every turn
    (exit code, a summary line, a match count).
 
@@ -254,6 +276,11 @@ When the user asks for a goal, don't just wrap their sentence in `/goal`. Do thi
    unless the user is in `acceptEdits`/`bypassPermissions`), mention it briefly.
    The condition can be up to **4,000 characters** — long enough to inline a small
    acceptance checklist as multiple AND'd clauses when the task warrants it.
+   The condition may be written in the user's language — a probe showed the
+   evaluator judged Japanese conditions correctly, including recency ([tested],
+   see `references/evaluator-behavior-tests.md`) — but keep command names, paths,
+   and output signals verbatim (e.g. `87 passed, 87 total`), since those must
+   match the transcript exactly.
 
 ## Critique / repair mode — [method]
 
@@ -267,8 +294,15 @@ this goal"), diagnose it against the constraint and the 5 elements. Check for:
   already discounts successes that predate the last change, so the real failure
   is a stalled loop ("changed code, never re-verified"), not a re-counted stale
   win. → require the proof "in the most recent turn" and pin the scope.
+- **Scope-gameable** — the proof command/scope isn't pinned, so a filtered or
+  subset run satisfies the letter of the condition. → pin the exact unfiltered
+  invocation and, when the suite size is known, require the visible total count.
 - **Subjective terms** — "clean", "properly", "works". → operationalize.
 - **Missing stop clause** — can loop forever if impossible. → add a bound.
+- **Stop clause detached from the condition** — written as a free-standing
+  sentence ("… 0 failed. Stop after 15 turns."), which the evaluator does not
+  treat as a way to complete the goal, so the loop outlives its cap — [tested].
+  → join it to the main condition with ", or stop after N turns".
 - **Wrong/imaginary command** — names a script the repo lacks. → replace with the
   real one (inspect the repo).
 - **Self-report loophole** — completes on Claude *saying* it's done. → require the
@@ -285,41 +319,42 @@ from the official docs; the exact condition strings below are this skill's.
 **Test-driven**
 ```
 /goal Every test under tests/auth passes. Prove it by, in the most recent turn,
-running `pytest tests/auth -q` and showing the summary line reports 0 failed.
-Do not modify or delete any file under tests/. Stop after 15 turns, or if the same failure
-recurs twice — then summarize the blocker.
+running `pytest tests/auth -q` and showing the summary line reports 0 failed —
+or stop after 15 turns or if the same failure recurs twice, then summarize the
+blocker. Do not modify or delete any file under tests/ — show `git diff --stat`
+each turn to prove it.
 ```
 
 **Build + typecheck**
 ```
 /goal `npm run build` completes with exit code 0 and no TypeScript errors, shown
-in the most recent turn's output. Do not modify files under src/generated/. Stop
-after 10 turns.
+in the most recent turn's output — or stop after 10 turns. Do not modify files
+under src/generated/.
 ```
 
 **Exhaustive API migration**
 ```
 /goal No call sites of oldApi( remain in src/. Prove it in the most recent turn
 by running `rg -n "oldApi\(" src/ | wc -l` and showing it prints 0, plus
-`npm test` (exit 0). Keep the public exports in src/index.ts unchanged. Stop
-after 25 turns or if the printed count doesn't drop for 2 turns — then report
-what's left.
+`npm test` (exit 0) — or stop after 25 turns or if the printed count doesn't
+drop for 2 turns, then report what's left. Keep the public exports in
+src/index.ts unchanged.
 ```
 
 **Backlog / queue drain**
 ```
 /goal Every issue labeled goal-batch is closed, each with a fix. Each turn run
 `gh issue list --label goal-batch --state open --json number --jq length` and
-show the printed count; done when it prints 0. Do not close an issue without a
-merged fix (commit or PR) that addresses it — closing without a fix does not
-count. Stop after 30 turns.
+show the printed count; done when it prints 0 — or stop after 30 turns. Do not
+close an issue without a merged fix (commit or PR) that addresses it — closing
+without a fix does not count.
 ```
 
 **File-size refactor**
 ```
 /goal No .ts file under src/ exceeds 300 lines. Prove it each turn by showing a
-line-count listing of files over the budget (empty when done). Keep the exports
-in src/index.ts unchanged. Stop after 20 turns.
+line-count listing of files over the budget (empty when done) — or stop after
+20 turns. Keep the exports in src/index.ts unchanged.
 ```
 
 ## Anti-patterns (reject or rewrite these) — [method]
