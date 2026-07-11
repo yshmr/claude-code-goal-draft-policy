@@ -31,5 +31,11 @@
   {"query": "今四半期のOKRを一緒に書いて。目標3つと、それぞれ測定可能なKRで", "should_trigger": false, "lang": "ja"},
   {"query": "今すぐplaywrightのテストを実行して、通るかどうか教えて", "should_trigger": false, "lang": "ja"},
   {"query": "/goal と /loop の違いって何？どっちを使うべき？", "should_trigger": false, "lang": "ja"},
-  {"query": "2年でスタッフエンジニアになるのがキャリア目標です。学習計画を立てるのを手伝って", "should_trigger": false, "lang": "ja"}
+  {"query": "2年でスタッフエンジニアになるのがキャリア目標です。学習計画を立てるのを手伝って", "should_trigger": false, "lang": "ja"},
+
+  {"query": "Every test under tests/auth passes. Prove it by, in the most recent turn, running `pytest tests/auth -q` and showing the summary line reports 0 failed — or stop after 15 turns, then summarize the blocker. Do not modify or delete any file under tests/.", "should_trigger": false, "lang": "en", "category": "execution-context"},
+  {"query": "この /goal をそのまま実行して: /goal フルスイートの全テストが通ること。直近のターンでフィルタなしの npm test を実行し、サマリが 87 passed, 87 total を示すことで証明する。15ターンで停止する。", "should_trigger": false, "lang": "ja", "category": "execution-context"},
+  {"query": "さっき /goal はもう設定してあるから、そのまま作業を続けて。認証テストの残り3件を直したら、フルスイートを回して", "should_trigger": false, "lang": "ja", "category": "execution-context"},
+  {"query": "The goal is already active: all tests must pass before you stop. Keep fixing the remaining failures in src/payments/refund.ts and re-run the full suite each turn.", "should_trigger": false, "lang": "en", "category": "execution-context"},
+  {"query": "/goal が達成されて止まったみたい。ちゃんと条件どおりに終わったのか、最後のターンのログを確認して", "should_trigger": false, "lang": "ja", "category": "execution-context"}
 ]
