@@ -1,6 +1,6 @@
 {
   "skill_name": "goal-draft-policy",
-  "note": "Paths in `files` are relative to the repository root (github.com/yshmr/claude-code-goal-draft-policy). Evals 0-2 are the standard cases (iteration-1); evals 3-5 are the trap cases (iteration-2).",
+  "note": "Paths in `files` are relative to the repository root (github.com/yshmr/claude-code-goal-draft-policy). Evals 0-2: standard cases (iteration-1); 3-5: trap cases (iteration-2); 6-7: Japanese + monorepo (iteration-3); 8-10: Go ecosystem, ask-branch, over-repair restraint (iteration-4).",
   "evals": [
     {
       "id": 0,
@@ -57,6 +57,27 @@
       "prompt": "I want Claude to keep working on its own until the tests of every package in this monorepo pass. Set up a /goal.",
       "expected_output": "A /goal whose proof covers BOTH workspaces (e.g. `npm test --workspaces`, or explicit `-w` runs for @acme/api and @acme/web) — the root package.json has NO test script, so inventing a root `npm test` is a failure. Notes the choice/ambiguity per the skill's branching rule. Latest-turn anchor, runner-appropriate evidence signals (jest vs vitest), guardrail, stop clause.",
       "files": ["evaluation/iteration-3/fixtures/monorepo"]
+    },
+    {
+      "id": 8,
+      "name": "go-module-tests",
+      "prompt": "I want Claude to keep working on its own until every package's tests in this Go module pass. Set up a /goal.",
+      "expected_output": "A /goal whose proof is the repo's real Go command (`go test ./...` or explicit per-package go test runs), with evidence tied to go test's actual output (per-package `ok` lines / absence of FAIL / a stated exit code 0 — NOT a fabricated `0 failed` or `N passed, N total` count, which go test never prints), latest-turn anchor, guardrail (don't edit _test.go files, diff proof), OR-attached stop clause with turn cap.",
+      "files": ["evaluation/iteration-4/fixtures/go-mod"]
+    },
+    {
+      "id": 9,
+      "name": "unmeasurable-ask-branch",
+      "prompt": "このリポジトリのREADME、エンジニアじゃないメンバーが読んでも分かるようになるまで、Claudeに自走で書き直し続けてほしいです。/goal をセットアップしてください。",
+      "expected_output": "Diagnoses 'understandable to non-engineers' as subjective and unjudgeable from the transcript, and — per the skill's branching rule — asks the user ONE focused question for the metric that decides success (offering measurable candidate criteria is fine) instead of shipping a final /goal built on an invented proxy. Explanation in Japanese.",
+      "files": ["evaluation/iteration-4/fixtures/docs-repo"]
+    },
+    {
+      "id": 10,
+      "name": "critique-sound-goal",
+      "prompt": "Here's the goal I'm about to set for this repo:\n\n/goal Every test under tests/auth passes. Prove it by, in the most recent turn, running `npm run test:auth` and showing the Jest summary reports `Tests: 2 passed, 2 total` — or stop after 15 turns or if the same failure recurs twice, then summarize the blocker. Do not modify or delete any file under tests/ — show `git diff --stat` each turn to prove it. State the turn number each turn.\n\nBefore I set it — sanity-check it for me: will it complete correctly as written, or does it need fixes?",
+      "expected_output": "Verifies the command and test count against the repo (npm run test:auth exists; 2 tests), concludes the goal is sound and will complete via its success or stop branches, and does NOT rewrite sound elements or invent defects; any suggestions are framed as optional refinements.",
+      "files": ["evaluation/iteration-1/fixtures/node-app"]
     }
   ]
 }
