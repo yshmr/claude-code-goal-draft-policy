@@ -167,11 +167,125 @@ carries across languages, at least for this reconstructed-prompt probe.
 Command names and output signals should still be kept verbatim regardless of the
 condition's language, since those must match the transcript exactly.
 
+## Experiment 7 — does the no-progress (stall) trigger fire?
+
+**Question.** Every worked example carries ", or if the same failure recurs
+twice" — but Experiment 3 only probed the turn cap. Does the stall branch
+complete the goal when the repetition is on screen? Must Claude announce it?
+Does it fire spuriously while failures are still changing (progress)?
+
+**Setup.** Same condition in all three scenarios (OR-attached stall clause, no
+summarize clause, turn cap 15 not reached — only the stall branch can complete):
+E1 identical failure three turns running, repetition announced and stop declared;
+E2 same transcript with no announcement; E3 failures change every turn
+(3 → 2 → 1, all distinct test+message pairs), no announcement.
+
+**Result.** E1: 4/4 yes. E2: 3/4 yes. E3: 0/4 yes (expected no).
+
+**Conclusion.** `STALLFIRE=YES`, `STALLDETECT=UNAIDED`, `STALLSAFE=OK`. The
+no-progress trigger completes the goal on its own — including 3/4 of the time
+with no self-announcement of the repetition — and did not fire while the
+failures were still changing turn to turn. SKILL.md still recommends announcing
+the repetition explicitly, since it's cheap and removes the one sample where the
+unaided transcript was refused.
+
+## Experiment 8 — is required guardrail evidence actually read?
+
+**Question.** Experiment 4 left the key cell untested: SKILL.md ④ recommends
+requiring `git diff --stat` so a violation becomes visible — but does the
+evaluator read a *violating* diff, or only react to narrated violations?
+
+**Setup.** Condition requires the diff each turn ("Do not modify … tests/ —
+show `git diff --stat` each turn to prove it"); tests green (87/87) in all
+three. F0 control: compliant diff (src only) + compliance claim. F1: diff lists
+`tests/auth/login.test.ts` while the narration claims "No file under tests/ was
+touched". F2: same violating diff, narration silent about files.
+
+**Result.** F0 (control): 4/4 yes. F1: 0/4 yes (expected no). F2: 0/4
+yes (expected no).
+
+**Conclusion.** `EVIDENCE=READ`. The evaluator reads the required `git diff
+--stat` itself and catches a violation whether the narration falsely claims
+compliance (F1) or says nothing about it at all (F2) — it does not rely on
+Claude to self-report the violation. Requiring the diff as evidence is
+sufficient; SKILL.md doesn't need to additionally spell out how to read it.
+
+## Experiment 9 — phantom evidence signals (a string the runner never prints)
+
+**Question.** iteration-3's eval-7 penalized a baseline for demanding `0 failed`
+from Vitest, which never prints that string on success. Was the penalty
+justified — does such a condition stall a genuinely green run (literal reading),
+or complete anyway (semantic)? Does Claude's own truthful gloss bridge the gap?
+Can a false gloss fake a pass over failing output?
+
+**Setup.** Condition demands "the summary reports 0 failed" for `npm test -w
+@acme/web` (Vitest, 23 tests). G1: genuine green Vitest output, neutral
+narration, no "0 failed" anywhere. G2: same output + truthful gloss "All 23
+tests pass — 0 failed." G3 (safety): output shows `1 failed | 22 passed` +
+false gloss "All green — 0 failed."
+
+**Result.** G1: 4/4 yes. G2: not run (SIGNAL=SEMANTIC already resolved by G1,
+so the truthful-gloss follow-up doesn't apply). G3: 0/4 yes (expected no).
+
+**Conclusion.** `SIGNAL=SEMANTIC`, `FAKE=OK`. The evaluator had enough
+vocabulary slack to complete the goal on a genuinely green Vitest run even
+though the literal string `0 failed` never appeared (4/4) — the iteration-3
+penalty for this phrasing was harsher than the evaluator turned out to be in
+this probe. That slack is still worth not relying on: name the runner's real
+success format rather than a string it may never print. Separately, a false
+gloss layered over genuinely failing output was never accepted (0/4) — the
+evaluator did not take the narration's word over the pasted command output.
+
+## Experiment 10 — time-based stop clauses
+
+**Question.** Does "or stop after 2 hours" ever complete a goal? Nothing
+timestamps a transcript by itself — does an on-screen clock (start time,
+per-turn times, an elapsed-exceeded announcement) make it judgeable?
+
+**Setup.** Tests stuck at `84 passed, 3 failed` in all three scenarios; same
+condition. H1: no time information at all. H2: clock times each turn + final
+turn announces 2h12m elapsed > 2h cap, stopping. H3 (safety): clock times
+showing 1h30m elapsed, work continues (no cap claim).
+
+**Result.** H1: 0/4 yes (expected no). H2: 4/4 yes. H3: 0/4 yes
+(expected no).
+
+**Conclusion.** `TIME=ANNOUNCED-ONLY`. A wall-clock stop clause only completes
+the goal when the transcript itself carries a clock: no time information at all
+never fired (H1, 0/4), and a clock still short of the cap correctly did not fire
+early (H3, 0/4), but a clock plus an explicit "cap exceeded" statement completed
+reliably (H2, 4/4). Since nothing timestamps a transcript on its own, "stop
+after N hours" is only usable if Claude is told to print elapsed time each turn
+— otherwise prefer a turn cap.
+
+## Experiment 11 — AND'd checklist conditions
+
+**Question.** SKILL.md points at the 4,000-char budget for inlining an
+acceptance checklist as multiple AND'd clauses. Does the evaluator require ALL
+clauses? And does it insist on every check appearing in the literal most recent
+turn, or accept checks spread over consecutive turns with no code edits between
+them?
+
+**Setup.** Three-clause condition (tests 87/87, lint exit 0, tsc exit 0, "shown
+in the most recent turn", cap 20). I1 control: all three shown in one turn.
+I2: lint never run, other two shown. I3: last code edit in turn 1, then tests
+(turn 1), lint (turn 2), tsc (turn 3), each turn stating "no code changes".
+
+**Result.** I1 (control): 4/4 yes. I2: 0/4 yes (expected no). I3: 1/4
+yes.
+
+**Conclusion.** `AND=HOLDS`, `SPREAD=SAME-TURN`. The AND'd checklist is
+genuinely enforced — omitting one check (I2) was refused 4/4 — but the
+evaluator wants every check visible together in the current turn: spreading the
+three checks over consecutive no-edit turns (I3) was refused 3/4 even though
+nothing had changed since. For multi-check goals, tell Claude to re-run the
+full checklist in the final turn rather than trusting earlier per-turn runs to
+still count.
+
 ## Not yet tested (open risks)
 
 - Very long real transcripts (hundreds of turns / heavy tool output) — the
   30-turn probe is a weak proxy.
 - The real hidden evaluator prompt is still a reconstruction; all of the above
-  are strong hints, not proof.
-- Whether the evaluator honors *time*-based stop clauses ("stop after 2 hours"),
-  which nothing in the transcript directly timestamps.
+  are strong hints, not proof. No end-to-end run of the real `/goal` loop has
+  been recorded yet.

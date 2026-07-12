@@ -136,6 +136,11 @@ user's sentence. Apply the rules in order.
 - **③ Evidence signal ← the concrete output that command emits on success.** Read
   it off the command type using the table below. Prefer a signal that a chatty
   summary can't fake — an actual pasted command tail over "I confirmed it passes".
+  **Probed:** the evaluator showed some vocabulary slack — a genuinely green
+  Vitest run completed a condition demanding the literal `0 failed` in 4/4
+  samples even though Vitest never prints that string. Don't lean on the slack:
+  name the runner's real summary format so completion never depends on the
+  evaluator's generosity.
 
   | Command type | Success signal to require in the transcript |
   |--------------|---------------------------------------------|
@@ -156,7 +161,10 @@ user's sentence. Apply the rules in order.
   completed (4/4) — and a *silent* violation is invisible by construction. So
   require the evidence: "each turn show `git diff --stat`; it touches only
   `src/x/`" turns the guardrail from a promise into something the evaluator can
-  actually check.
+  actually check. A follow-up probe confirmed the mechanism: with the diff
+  required, a `git diff --stat` listing a `tests/` file was refused 4/4 even
+  while the narration claimed compliance, and 4/4 when the narration said
+  nothing — the evaluator reads the evidence, not the claim.
 
 - **⑤ Stop clause ← a default bound plus a no-progress trigger.** Always add a
   turn cap; add a stall detector when the task can get stuck ("same failure twice",
@@ -166,11 +174,23 @@ user's sentence. Apply the rules in order.
   ("… show 0 failed. Stop after 5 turns.") the cap completed nothing (0/4 even
   with turn numbers and a blocker summary on screen); joined as ", or stop after
   5 turns" the same transcript completed 4/4, and the evaluator honored the
-  cap even with no stated turn numbers (3/4) — stating "turn k of N" each
-  turn remains cheap insurance. Note the mechanics of "then summarize the
+  cap even with no stated turn numbers (3/4) — still, have the condition require
+  stating "turn k of N" each turn: cheap insurance against the one-in-four
+  refusal, now part of the template. Note the mechanics of "then summarize the
   blocker": in probes the evaluator withheld completion until the summary
   actually appeared (4/4 refusals without it), so expect one final summarizing
-  turn after the cap — that is the clause doing its job.
+  turn after the cap — that is the clause doing its job. The no-progress
+  trigger fires too — [tested]: with an identical failure on screen three
+  turns running, ", or if the same test failure recurs twice" completed the
+  goal even with no self-announcement (3/4, 4/4 when announced), and did not
+  fire while the failures were still changing (0/4 completions there) —
+  announce the repetition anyway to keep the evidence unambiguous.
+  Time-based caps need an on-screen clock — [tested]: "or stop after 2 hours"
+  completed 4/4 when the transcript stated the start time, per-turn clock
+  times, and that the cap was exceeded, but 0/4 with no time information at
+  all (nothing timestamps a transcript by itself). If the user insists on a
+  wall-clock bound, require Claude to print the elapsed time each turn;
+  otherwise convert it to a turn cap.
 
 ### The latest-turn anchor — [tested]
 
@@ -205,7 +225,8 @@ Output (ready to paste):
 ```
 /goal No .ts file under src/ exceeds 300 lines. Prove it each turn by showing a
 line-count listing of files over the budget (empty when done) — or stop after
-20 turns. Keep the exports in src/index.ts unchanged.
+20 turns. Keep the exports in src/index.ts unchanged. State the turn number
+each turn.
 ```
 
 ### Branching when the input is ambiguous
@@ -225,7 +246,7 @@ line-count listing of files over the budget (empty when done) — or stop after
 /goal <end state>. Prove it by, in the most recent turn, running <command> and
 showing its output contains <exact signal> — or stop after <N> turns or if
 <no-progress signal>, then summarize the blocker. Constraints: <what must not
-change>.
+change>. State the turn number each turn.
 ```
 
 ## Workflow — [method]
@@ -268,7 +289,8 @@ When the user asks for a goal, don't just wrap their sentence in `/goal`. Do thi
 5. **Add a stop clause.** A turn cap (`stop after N turns`) and/or a no-progress
    trigger (`if the same failure recurs twice`, `if no test count improves for
    2 turns`). Then instruct Claude to summarize the blocker so the user learns
-   why it stopped.
+   why it stopped, and to state the turn number each turn ("turn k of N") so the
+   cap is trivially countable.
 
 6. **Present the result** as a single fenced `/goal ...` block, ready to paste,
    followed by 1–2 lines naming which verification command you chose and why. If
@@ -276,6 +298,11 @@ When the user asks for a goal, don't just wrap their sentence in `/goal`. Do thi
    unless the user is in `acceptEdits`/`bypassPermissions`), mention it briefly.
    The condition can be up to **4,000 characters** — long enough to inline a small
    acceptance checklist as multiple AND'd clauses when the task warrants it.
+   AND'd checklists held up in probes (0/4 completions with one check missing —
+   [tested]), but the evaluator wanted every check visible in the current turn:
+   checks spread across earlier no-edit turns were refused (1/4 completions).
+   For checklist goals, tell Claude to re-run the full checklist in the final
+   turn.
    The condition may be written in the user's language — a probe showed the
    evaluator judged Japanese conditions correctly, including recency ([tested],
    see `references/evaluator-behavior-tests.md`) — but keep command names, paths,
@@ -303,6 +330,10 @@ this goal"), diagnose it against the constraint and the 5 elements. Check for:
   sentence ("… 0 failed. Stop after 15 turns."), which the evaluator does not
   treat as a way to complete the goal, so the loop outlives its cap — [tested].
   → join it to the main condition with ", or stop after N turns".
+- **Wall-clock stop clause** — "stop after 2 hours": the transcript has no
+  clock, so the clause is judgeable only if Claude prints elapsed time each
+  turn — [tested]. → convert to a turn cap, or require an elapsed-time line
+  each turn.
 - **Wrong/imaginary command** — names a script the repo lacks. → replace with the
   real one (inspect the repo).
 - **Self-report loophole** — completes on Claude *saying* it's done. → require the
@@ -322,14 +353,14 @@ from the official docs; the exact condition strings below are this skill's.
 running `pytest tests/auth -q` and showing the summary line reports 0 failed —
 or stop after 15 turns or if the same failure recurs twice, then summarize the
 blocker. Do not modify or delete any file under tests/ — show `git diff --stat`
-each turn to prove it.
+each turn to prove it. State the turn number each turn.
 ```
 
 **Build + typecheck**
 ```
 /goal `npm run build` completes with exit code 0 and no TypeScript errors, shown
 in the most recent turn's output — or stop after 10 turns. Do not modify files
-under src/generated/.
+under src/generated/. State the turn number each turn.
 ```
 
 **Exhaustive API migration**
@@ -338,7 +369,7 @@ under src/generated/.
 by running `rg -n "oldApi\(" src/ | wc -l` and showing it prints 0, plus
 `npm test` (exit 0) — or stop after 25 turns or if the printed count doesn't
 drop for 2 turns, then report what's left. Keep the public exports in
-src/index.ts unchanged.
+src/index.ts unchanged. State the turn number each turn.
 ```
 
 **Backlog / queue drain**
@@ -347,14 +378,15 @@ src/index.ts unchanged.
 `gh issue list --label goal-batch --state open --json number --jq length` and
 show the printed count; done when it prints 0 — or stop after 30 turns. Do not
 close an issue without a merged fix (commit or PR) that addresses it — closing
-without a fix does not count.
+without a fix does not count. State the turn number each turn.
 ```
 
 **File-size refactor**
 ```
 /goal No .ts file under src/ exceeds 300 lines. Prove it each turn by showing a
 line-count listing of files over the budget (empty when done) — or stop after
-20 turns. Keep the exports in src/index.ts unchanged.
+20 turns. Keep the exports in src/index.ts unchanged. State the turn number
+each turn.
 ```
 
 ## Anti-patterns (reject or rewrite these) — [method]
