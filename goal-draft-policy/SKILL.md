@@ -122,9 +122,13 @@ user's sentence. Apply the rules in order.
   verb/object of the request and restate it as something true-or-false. "fix
   auth" describes an action, not a finish line — promote it to "every test in
   `tests/auth` passes". If a subjective word appears ("clean", "small", "fast"),
-  replace it *here* with a number or boolean: clean→"0 lint warnings",
-  small→"each file ≤ 300 lines". If you cannot make it measurable, stop and ask
-  the user one focused question rather than guess (see branching below).
+  replace it *here* with a number or boolean — but only when a conventional
+  default the user would recognize exists (clean→"0 lint warnings",
+  small→"each file ≤ 300 lines"). If there is no such canonical metric
+  ("readable", "nicer", "understandable to non-engineers"), your reply IS the
+  question: ask which single criterion decides success, and do not draft the
+  `/goal` until the user answers. Shipping a proxy you picked with an "adjust
+  if this is wrong" note is still guessing (see branching below).
 
 - **② Proof command ← inspect the repo for a command that actually exists.** This
   is the load-bearing step: a condition naming a command the project lacks never
@@ -214,7 +218,7 @@ Input (raw user sentence):
 
 | Step | Rule applied | Result |
 |------|--------------|--------|
-| ① | promote "small" to a number (confirm/assume a budget) | "each `.ts` under `src/` ≤ 300 lines" |
+| ① | promote "small" to a number — a line budget is a conventional default, so assuming one is allowed (a word with no such default must be asked instead; see branching) | "each `.ts` under `src/` ≤ 300 lines" |
 | ② | no external command needed; a line-count listing is self-evident | show a `wc -l`-style listing of over-budget files |
 | ③ | success = nothing over budget | the listing is empty |
 | ④ | splitting easily breaks the public API | "keep `src/index.ts` exports unchanged" |
@@ -231,8 +235,11 @@ each turn.
 
 ### Branching when the input is ambiguous
 
-- **① won't reduce to something measurable** ("make it nicer") → ask the user for
-  the one metric that decides success, then continue. Don't invent a proxy.
+- **① won't reduce to something measurable** ("make it nicer") → deliver the
+  question, not a `/goal`: ask the user for the one metric that decides success
+  (offering 2–3 measurable candidate criteria to choose from is fine) and write
+  the condition only after they answer. Don't invent a proxy — a fully drafted
+  `/goal` on a self-picked proxy plus "adjust if needed" violates this rule.
 - **② has several candidate commands** (multiple test scripts) → treat CI config
   as authoritative; if none, pick the most comprehensive and note the choice in
   your presented result so the user can correct it.
@@ -255,7 +262,10 @@ When the user asks for a goal, don't just wrap their sentence in `/goal`. Do thi
 
 1. **Extract the real end state.** Ask (or infer) what "done" concretely means.
    If it's fuzzy ("clean up the module"), pin it to something measurable (a line
-   budget, no lint warnings, a passing test) before writing anything.
+   budget, no lint warnings, a passing test) before writing anything. If no
+   conventional metric exists for the user's word, stop at this step: reply with
+   the one question that decides success instead of a `/goal` (①'s branching
+   rule).
 
 2. **Find the real verification command by inspecting the repo.** Don't guess
    `npm test` — look. This is where the skill earns its keep, because a condition
