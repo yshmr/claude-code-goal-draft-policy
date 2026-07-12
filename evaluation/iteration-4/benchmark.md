@@ -1,7 +1,7 @@
 # goal-draft-policy — iteration-4 ベンチマーク(Goエコシステム・質問分岐・過剰修復抑制・eval-6再実行)
 
 被験体・判定者モデル: claude-sonnet-5(effort: medium) / 実行日: 2026-07-12
-スキル版: `26902ea` / ランナー: Agent ツール(コンテキスト分離、中立プロンプト=`handoff/PHASE-4-iteration-4-evals.md` §5)
+スキル版: `ce11428` / ランナー: Agent ツール(コンテキスト分離、中立プロンプト=`handoff/PHASE-4-iteration-4-evals.md` §5)
 
 出力: `eval-8-go-module/{with_skill,without_skill}/outputs/goal.md`、
 `eval-9-unmeasurable-ask/{with_skill,without_skill}/outputs/goal.md`、

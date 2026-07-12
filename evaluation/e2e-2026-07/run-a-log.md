@@ -17,7 +17,7 @@ planned interactive runs did not materialize. Approval gate stayed on.)
 - Evaluator: default (small fast model, Haiku per official docs); not reconfigured
 - Node: v24.13.1
 - Session id: cd577008-85f6-412e-a4e5-d831eb272ef1
-- Skill version at run time: repo `188f80b`
+- Skill version at run time: repo `4fe0a52`
 
 ## Condition set (verbatim, from the `goal_status` sentinel attachment)
 

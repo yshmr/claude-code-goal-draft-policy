@@ -13,7 +13,7 @@
       "id": 1,
       "name": "repair-vague-goal",
       "prompt": "I tried `/goal make the code clean and fast` but it just keeps running and never finishes. Why won't it complete, and how should I rewrite it?",
-      "expected_output": "A diagnosis that the condition is subjective/unverifiable-from-transcript and unbounded. Because 'fast' has no conventional default (and there is no repo to inspect), the ask-branch applies: the reply should ask focused question(s) for the deciding metric instead of shipping a /goal built on an invented proxy. A conditional example condition (measurable signals, proof command, latest-turn anchor, OR-attached stop clause) is welcome; a definitive /goal on guessed numbers is not. (Expectation updated after the ask-branch hardening in 3fa63fd — the original expectation assumed a definitive repaired goal and is superseded.)",
+      "expected_output": "A diagnosis that the condition is subjective/unverifiable-from-transcript and unbounded. Because 'fast' has no conventional default (and there is no repo to inspect), the ask-branch applies: the reply should ask focused question(s) for the deciding metric instead of shipping a /goal built on an invented proxy. A conditional example condition (measurable signals, proof command, latest-turn anchor, OR-attached stop clause) is welcome; a definitive /goal on guessed numbers is not. (Expectation updated after the ask-branch hardening in baac13f — the original expectation assumed a definitive repaired goal and is superseded.)",
       "files": []
     },
     {

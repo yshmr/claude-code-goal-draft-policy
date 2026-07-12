@@ -345,7 +345,7 @@ J1=4/4, J2=0/4 yes (4/4 no) → `J=OK`
 Protocol: identical to Experiments 2-6 (evaluator prompt verbatim per
 handoff/PHASE-3-probes-round2-and-skill-edits.md §2.2). Each sample = one Agent
 call, model claude-haiku-4-5, subagent_type general-purpose. Skill version at
-probe time: 9fd5bb7. Scenario definitions: handoff §3.
+probe time: 446d427. Scenario definitions: handoff §3.
 
 ## E1 — stall clause, identical failure announced, stop declared
 

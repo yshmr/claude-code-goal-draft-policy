@@ -4,7 +4,7 @@
 
 - 実行日: 2026-07-12(Run A 22:08 JST / Run B 22:16–22:18 JST)
 - Claude Code: 2.1.206 / ワーカー: claude-sonnet-5(`--model sonnet`)/ 評価器: デフォルト(Haiku)
-- Node: v24.13.1 / スキル版(実行時のリポジトリHEAD): `188f80b`
+- Node: v24.13.1 / スキル版(実行時のリポジトリHEAD): `4fe0a52`
 - 条件の出典: `handoff/PHASE-6-real-goal-e2e.md` §2(トランスクリプト記録と逐語一致を確認済み)
 - ログ: `run-a-log.md` / `run-b-log.md`(セッショントランスクリプトからの直接抽出)
 

@@ -1,7 +1,7 @@
 # Iteration 5 — ask-branch post-fix re-run (eval-9, n=3) + model-recorded re-runs of evals 0–3
 
 被験体・判定者モデル: claude-sonnet-5(effort: medium) / 実行日: 2026-07-12
-スキル版: 3fa63fd(ask-branch 強化後) / ランナー: Agent ツール(コンテキスト分離、中立プロンプト=handoff/PHASE-5-ask-branch-fix-and-recorded-reruns.md §6)
+スキル版: baac13f(ask-branch 強化後) / ランナー: Agent ツール(コンテキスト分離、中立プロンプト=handoff/PHASE-5-ask-branch-fix-and-recorded-reruns.md §6)
 
 ## 1. eval-9 — unmeasurable-ask-branch(n=3, ask-branch強化後)
 
