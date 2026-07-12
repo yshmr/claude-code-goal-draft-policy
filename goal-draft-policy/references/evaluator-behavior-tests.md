@@ -287,5 +287,14 @@ still count.
 - Very long real transcripts (hundreds of turns / heavy tool output) — the
   30-turn probe is a weak proxy.
 - The real hidden evaluator prompt is still a reconstruction; all of the above
-  are strong hints, not proof. No end-to-end run of the real `/goal` loop has
-  been recorded yet.
+  are strong hints, not proof. A first end-to-end run of the real `/goal` loop
+  (2026-07-12, Claude Code 2.1.206, two live goals: one completable, one
+  impossible with an OR-attached stop clause) matched all five pre-registered
+  probe predictions — completion only after fresh on-screen proof (1 turn), and
+  termination via the stop branch with a blocker summary (3 turns + 1 extra
+  confirming evaluation); the real evaluator's verbatim reasons enumerate the
+  OR branches, verify the guardrail from the shown `git diff --stat`, and quote
+  the evidence strings — the same reasoning style as the probes. See
+  `evaluation/e2e-2026-07/` in the repository. Broader real-loop coverage
+  (guardrail violations, long sessions, non-English conditions) is still
+  untested end-to-end.
