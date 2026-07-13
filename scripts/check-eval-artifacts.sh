@@ -51,6 +51,15 @@ for f in "${RECORDS[@]}"; do
   fi
 done
 
+# R8: the synthetic-data boundary declaration must stay present, so it can't be
+# silently dropped. Content leaks are caught separately by the publication scan;
+# this only guards the explicit statement that published data is synthetic.
+SYNTH_DECL="evaluation/README.md"
+if ! grep -q "SYNTHETIC-DATA-DECLARATION" "$SYNTH_DECL" 2>/dev/null; then
+  echo "  [FAIL] $SYNTH_DECL missing the SYNTHETIC-DATA-DECLARATION statement"
+  fail=1
+fi
+
 echo "== Evaluation artifact provenance check =="
 echo "   records checked: $checked"
 if [ "$fail" -ne 0 ]; then

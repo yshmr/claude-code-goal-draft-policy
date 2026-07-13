@@ -41,3 +41,6 @@ jobs:
 
       - name: Evaluation artifact provenance
         run: bash scripts/check-eval-artifacts.sh
+
+      - name: Fixture integrity
+        run: bash scripts/check-fixture-integrity.sh
