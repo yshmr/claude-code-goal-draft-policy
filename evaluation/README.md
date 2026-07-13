@@ -46,3 +46,13 @@
 | eval-6（日本語） | `iteration-4/eval-6-japanese-post-edit/` | `iteration-3/eval-6-*` | テンプレ格上げ（ターン番号明示を必須化）の効果検証で ⚠️→✅ |
 | eval-9（質問分岐） | `iteration-5/eval-9-ask-branch-post-fix/`（n=3） | `iteration-4/eval-9-*`（n=1, skill 敗北） | 分岐ルールを「質問だけ返す」停止指示に強化（`ASKFIX = EFFECTIVE`） |
 | evals 0–3 | `iteration-5/`（モデル記録付き再実行） | `iteration-1/`・`iteration-2/` の初回 | 旧ランはモデル未記録で比較不能 |
+
+## Synthetic data boundary
+
+<!-- SYNTHETIC-DATA-DECLARATION (required; verified by scripts/check-eval-artifacts.sh) -->
+**このリポジトリで公開する fixture・eval 出力・プローブログ・E2E ログはすべて合成
+（synthetic）または再構成データであり、実在の人物・顧客・社内データ・実運用の生
+トランスクリプトを含みません。** fixture の内容は `evaluation/fixtures.manifest.sha256`
+に git blob ハッシュで固定され（`scripts/check-fixture-integrity.sh`）、記録後の
+無断改変を CI が検知します。実 session/ローカル情報の混入は
+[`../docs/publication-safety.md`](../docs/publication-safety.md) のスキャナで別途遮断します。
