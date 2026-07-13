@@ -43,7 +43,32 @@ warn_count=0
 # ($USERPROFILE, C:\Users\…, `session id:` examples, the regexes themselves), so
 # they are excluded from the scan to avoid self-referential false positives.
 # Everything else is scanned in full.
-SELF_EXCLUDE=(':(exclude)scripts/check-publication-safety.sh' ':(exclude)docs/publication-safety.md')
+SELF_EXCLUDE=(
+  ':(exclude)scripts/check-publication-safety.sh'
+  ':(exclude)docs/publication-safety.md'
+  ':(exclude).publication-safety-allowlist'
+)
+
+# Allowlist: known-safe hits (e.g. deliberately synthetic UUIDs in fixtures) that
+# should not be reported. Each non-comment line is an ERE matched against the
+# "path:line:content" hit; a hit matching any line is dropped. This is what makes
+# --strict safe to run in CI — a legitimate synthetic UUID can be permitted
+# explicitly instead of failing the build.
+ALLOWLIST_FILE=".publication-safety-allowlist"
+ALLOW_TMP="$(mktemp)"
+trap 'rm -f "$ALLOW_TMP"' EXIT
+if [ -f "$ALLOWLIST_FILE" ]; then
+  grep -vE '^[[:space:]]*(#|$)' "$ALLOWLIST_FILE" > "$ALLOW_TMP" 2>/dev/null || true
+fi
+
+# Drop allowlisted lines from a set of hits read on stdin.
+allow_filter() {
+  if [ -s "$ALLOW_TMP" ]; then
+    grep -vEf "$ALLOW_TMP"
+  else
+    cat
+  fi
+}
 
 # git grep over the publishable working set. Returns 0 if matches printed.
 scan() {
@@ -51,7 +76,7 @@ scan() {
   local sev="$1" label="$2" pattern="$3"
   shift 3
   local hits
-  hits="$(git grep --untracked -nEI "$pattern" -- . "${SELF_EXCLUDE[@]}" "$@" 2>/dev/null)" || hits=""
+  hits="$(git grep --untracked -nEI "$pattern" -- . "${SELF_EXCLUDE[@]}" "$@" 2>/dev/null | allow_filter)" || hits=""
   if [ -n "$hits" ]; then
     echo "  [$sev] $label"
     echo "$hits" | sed 's/^/        /'
@@ -86,7 +111,7 @@ scan FAIL "local absolute paths / usernames" \
 # Personal email addresses. Benign addresses (noreply@, example.*) are filtered
 # out so the git Co-Authored-By footer convention does not trip the scan.
 email_hits="$(git grep --untracked -nEI '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' -- . "${SELF_EXCLUDE[@]}" ':(exclude)LICENSE' 2>/dev/null \
-  | grep -vE 'noreply@|@example\.(com|org|net)|@users\.noreply\.github\.com' || true)"
+  | grep -vE 'noreply@|@example\.(com|org|net)|@users\.noreply\.github\.com' | allow_filter || true)"
 if [ -n "$email_hits" ]; then
   echo "  [FAIL] personal email addresses"
   echo "$email_hits" | sed 's/^/        /'

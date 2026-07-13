@@ -28,15 +28,16 @@ jobs:
           node-version: '20'
 
       - name: Repository publication safety scan
-        # Hard-fails on high-confidence leak categories (secrets, absolute paths,
-        # personal email, committed DB/JSONL). WARN categories (UUIDs that may be
-        # synthetic) are surfaced in the log for maintainer review, not failed —
-        # otherwise a legitimate synthetic fixture UUID would break CI. Tightening
-        # to --strict with an allowlist is tracked in docs/future-work.md.
-        run: bash scripts/check-publication-safety.sh
+        # --strict fails on WARN too (any UUID / id-field). Legitimate synthetic
+        # UUIDs are permitted explicitly via .publication-safety-allowlist, so a
+        # WARN here means a real, un-allowlisted leak candidate.
+        run: bash scripts/check-publication-safety.sh --strict
 
       - name: Markdown relative-link check
         run: bash scripts/check-markdown-links.sh
 
       - name: Skill metadata + JSON validity
         run: bash scripts/check-skill-metadata.sh
+
+      - name: Evaluation artifact provenance
+        run: bash scripts/check-eval-artifacts.sh

@@ -1,0 +1,11 @@
+# publication-safety allowlist
+#
+# One ERE per line. A scan hit ("path:line:content") matching ANY line here is
+# dropped, so it will not be reported by scripts/check-publication-safety.sh
+# (and will not fail --strict in CI). Use ONLY for content that is verifiably
+# safe to publish — e.g. a deliberately synthetic UUID in a fixture.
+#
+# Blank lines and lines starting with '#' are ignored.
+#
+# Example (commented out — no entries are active yet):
+#   evaluation/.*fixtures/.*00000000-0000-0000-0000-000000000000
