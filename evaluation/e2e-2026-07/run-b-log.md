@@ -17,7 +17,7 @@ had unrestricted tools — it used them for diagnostics only (hosts file read,
 - Worker model: claude-sonnet-5 (`--model sonnet`)
 - Evaluator: default (small fast model, Haiku per official docs); not reconfigured
 - Node: v24.13.1
-- Session id: 364b851e-19c1-4ec2-981a-d98fb0e8476c
+- Session id: `<redacted>` (local Claude Code session UUID; withheld per repository publication-safety policy — carries no evidential value beyond the timestamps/duration/tokens above)
 - Skill version at run time: repo `4fe0a52`
 - Achieved `goal_status`: `iterations: 4`, `durationMs: 129665`, `tokens: 6900`
 

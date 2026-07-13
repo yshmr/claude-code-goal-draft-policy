@@ -16,7 +16,7 @@ planned interactive runs did not materialize. Approval gate stayed on.)
 - Worker model: claude-sonnet-5 (`--model sonnet`)
 - Evaluator: default (small fast model, Haiku per official docs); not reconfigured
 - Node: v24.13.1
-- Session id: cd577008-85f6-412e-a4e5-d831eb272ef1
+- Session id: `<redacted>` (local Claude Code session UUID; withheld per repository publication-safety policy — carries no evidential value beyond the timestamps/duration/tokens above)
 - Skill version at run time: repo `4fe0a52`
 
 ## Condition set (verbatim, from the `goal_status` sentinel attachment)
