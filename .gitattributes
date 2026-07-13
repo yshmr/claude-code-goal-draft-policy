@@ -1,0 +1,5 @@
+# Shell scripts and workflow YAML must stay LF so they run under Linux CI
+# (a CR would break the shebang / emit `\r: command not found`).
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf

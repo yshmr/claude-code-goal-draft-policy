@@ -1,0 +1,42 @@
+name: validate
+
+# Pure validation only — NO provider calls, NO Claude Code, NO real /goal runs,
+# NO paid evaluation. Everything here is deterministic and offline, so it is safe
+# to run on every push and pull request (including from third parties).
+#
+# Empirical work that needs a model/provider (re-running evals, real /goal E2E,
+# skill-creator optimization) is deliberately kept OUT of this workflow — see
+# .github/workflows/manual-empirical.yml and docs/future-work.md (R2–R5).
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pure-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Repository publication safety scan
+        # Hard-fails on high-confidence leak categories (secrets, absolute paths,
+        # personal email, committed DB/JSONL). WARN categories (UUIDs that may be
+        # synthetic) are surfaced in the log for maintainer review, not failed —
+        # otherwise a legitimate synthetic fixture UUID would break CI. Tightening
+        # to --strict with an allowlist is tracked in docs/future-work.md.
+        run: bash scripts/check-publication-safety.sh
+
+      - name: Markdown relative-link check
+        run: bash scripts/check-markdown-links.sh
+
+      - name: Skill metadata + JSON validity
+        run: bash scripts/check-skill-metadata.sh

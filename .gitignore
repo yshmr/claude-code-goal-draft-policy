@@ -14,3 +14,16 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# Publication safety — never commit local Claude Code state or raw transcripts.
+# (Enforced at review time by scripts/check-publication-safety.sh; see
+#  docs/publication-safety.md.)
+*.jsonl
+*.sqlite
+*.sqlite3
+*.db
+.env
+.env.*
+checkpoints/
+*checkpoint*.json
+.claude/history*

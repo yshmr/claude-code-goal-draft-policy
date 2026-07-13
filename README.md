@@ -64,6 +64,7 @@ goal-draft-policy/          インストール可能なスキル本体
   evals/evals.json          テストケース
 
 evaluation/                 スキルの検証記録（透明性のため）
+  README.md                 評価の正典・置換関係の索引（current / historical / contaminated / E2E）← まずここを読む
   iteration-1/              標準ケース  — スキルあり100% / なし58%
   iteration-2/              罠ケース    — スキルあり100% / なし約82%（一部セル汚染。iteration-2-rerunで置き換え）
   iteration-2-rerun/        iteration-2 の汚染セルのクリーン再実行（モデル記録あり）
@@ -76,13 +77,29 @@ evaluation/                 スキルの検証記録（透明性のため）
   desc-opt/trigger-results.md          初回（20問）のトリガー精度結果
   desc-opt/trigger-results-2026-07.md  2026-07再評価（30問、判定者モデル記録あり）
 
-handoff/                    フェーズ実行仕様書（設計セッションからの引き継ぎ）
+docs/
+  future-work.md            未検証項目＋ロードマップ＋外部指摘ログ（canonical な TODO）
+  publication-safety.md     公開前の混入検査チェックリスト（(b) repository publication safety）
+scripts/
+  check-publication-safety.sh   公開前スキャナ（秘密情報・ローカルパス・session ID・raw JSONL 等）
+
+handoff/                    フェーズ実行仕様書（設計セッションからの引き継ぎ。参照元であり再解釈しない）
 ```
 
 > 注: `SKILL.md`・`references/`・`evaluation/` 配下の `goal.md`（eval出力）・`trigger-eval.json`
 > などは、Claudeが読む動作定義／実際に生成・実行された記録として **英語のまま** 保持しています。
 
 ## 検証サマリー（と正直な注意点）
+
+> **現行の正典（current authority）と歴史的結果（historical result）を先に区別してください。**
+> 最新のモデル記録付き再評価は with_skill **85%** / baseline **83%**（`evaluation/iteration-5/`、
+> claude-sonnet-5・2026-07-12）で、両者は**ほぼ拮抗**しています。これが現行の正典です。
+> 以下に出てくる「**100% vs 58%**」などはモデル**未記録の旧ラン（historical / legacy）**の数値で、
+> 被験体モデルが不明なため現行値と**直接比較できません**（削除も再採点もせず、履歴として保持）。
+> どの記録が current / historical / contaminated / E2E authority かは
+> **[`evaluation/README.md`](evaluation/README.md)** に索引化しています。まずそこを読むと迷いません。
+> **このスキルは Skill 優位を保証しません。** 数値は強い示唆であって保証ではありません。
+> 未検証項目・今後の予定は [`docs/future-work.md`](docs/future-work.md)。
 
 このスキルは書いただけでなく、計測しています:
 

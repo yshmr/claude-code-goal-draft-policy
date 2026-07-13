@@ -1,0 +1,32 @@
+name: manual-empirical
+
+# Placeholder for empirical / provider-dependent work, deliberately kept OFF the
+# push/PR path. Anything that needs a model, Claude Code, a real /goal run, or
+# paid evaluation belongs here (or in a similarly gated workflow), NOT in
+# validate.yml.
+#
+# Policy (see docs/future-work.md, external feedback F2 / Phase C):
+#   - Runs only on manual dispatch, never automatically on push/PR.
+#   - Empirical runs are treated as NEW evaluation contracts, not as re-runs or
+#     replacements of existing recorded results.
+#   - Existing results, failures, contamination notes, and deviations are never
+#     overwritten by a passing re-run.
+#   - No provider job is wired here yet; this file documents where such jobs go
+#     and the guardrails they must follow.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-notice:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain the separation
+        run: |
+          echo "This workflow is the designated home for provider/model-dependent"
+          echo "evaluation work (re-running evals, real /goal E2E, skill-creator)."
+          echo "It is manual-only and currently wires no provider job."
+          echo "See docs/future-work.md R2-R5 and Phase C before adding one."
